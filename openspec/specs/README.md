@@ -9,6 +9,7 @@ Capabilities map to Boyd OODA phases and cross-cutting concerns.
 | **human-in-the-loop** | Decide / Act gates | [human-in-the-loop/spec.md](human-in-the-loop/spec.md) |
 | **runtime-modes** | stub / manual / live | [runtime-modes/spec.md](runtime-modes/spec.md) |
 | **operator-console** | Human demo surfaces | [operator-console/spec.md](operator-console/spec.md) |
+| **demo-scenarios** | Grok ticket fixtures | [demo-scenarios/spec.md](demo-scenarios/spec.md) |
 
 ## Planned (Phase 1+)
 

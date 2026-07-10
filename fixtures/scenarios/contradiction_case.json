@@ -1,0 +1,10 @@
+{
+  "initial_facts": {
+    "case_status": { "key": "case_status", "value": "closed", "confidence": 0.92 }
+  },
+  "signals": [
+    { "key": "case_status", "value": "open", "confidence": 0.85, "source": "case_api" }
+  ],
+  "failed_sensors": [],
+  "confidence": 0.85
+}

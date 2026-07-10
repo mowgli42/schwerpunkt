@@ -1,0 +1,9 @@
+{
+  "initial_facts": {},
+  "signals": [
+    { "key": "system_status", "value": "healthy", "confidence": 0.95, "source": "health_check" }
+  ],
+  "failed_sensors": [],
+  "confidence": 0.9,
+  "pattern_id": "retrieve_status"
+}

@@ -1,0 +1,8 @@
+{
+  "initial_facts": {},
+  "signals": [
+    { "key": "status", "value": "ok", "confidence": 0.9, "source": "health" }
+  ],
+  "failed_sensors": [],
+  "confidence": 0.9
+}

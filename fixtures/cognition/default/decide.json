@@ -1,0 +1,7 @@
+{
+  "candidates": [
+    { "id": "A", "name": "Investigate", "risk_class": "reversible", "expected_cost": 1 },
+    { "id": "B", "name": "mark_complete", "risk_class": "reversible", "expected_cost": 1 }
+  ],
+  "chosen_id": "B"
+}

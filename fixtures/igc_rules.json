@@ -1,0 +1,11 @@
+{
+  "rules": [
+    {
+      "pattern_id": "retrieve_status",
+      "min_observation_confidence": 0.8,
+      "min_orientation_confidence": 0.8,
+      "risk_class": "reversible",
+      "action_name": "retrieve_status_snapshot"
+    }
+  ]
+}

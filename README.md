@@ -53,7 +53,15 @@ SCHWERKPUNKT_MODE=manual SCHWERKPUNKT_PROFILE=local uvicorn schwerpunkt.api:app
 
 See **`docs/OPERATOR-AND-RUN-MODES.md`** for interaction surfaces and local system demands.
 
-## Workflow
+## Quick start (demo)
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+./scripts/demo-manual.sh          # headless operator demo (no AI)
+uvicorn schwerpunkt.api.app:app --reload  # browser console at /console
+pytest tests/ -q                  # unit + Gherkin verification
+```
 
 ```bash
 # Issue tracking

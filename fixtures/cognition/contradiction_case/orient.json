@@ -1,0 +1,13 @@
+{
+  "force_contradiction": true,
+  "contradictions": [
+    {
+      "key": "case_status",
+      "new_value": "open",
+      "prior_value": "closed",
+      "severity": "high",
+      "prior_confidence": 0.92
+    }
+  ],
+  "orientation_confidence": 0.4
+}

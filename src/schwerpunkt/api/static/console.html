@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Schwerpunkt Operator Console</title>
+  <style>
+    :root { --bg: #0f1419; --panel: #1a2332; --text: #e7ecf3; --accent: #3d9a8b; --warn: #c9a227; --danger: #c75050; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 1rem; }
+    h1 { font-size: 1.25rem; margin: 0 0 1rem; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+    .panel { background: var(--panel); border-radius: 8px; padding: 1rem; }
+    .panel h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; margin: 0 0 0.75rem; }
+    button { background: var(--accent); color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-right: 0.5rem; margin-top: 0.5rem; }
+    button.secondary { background: #334155; }
+    input, select { background: #0f1419; border: 1px solid #334155; color: var(--text); padding: 0.4rem; border-radius: 4px; width: 100%; margin: 0.25rem 0; }
+    pre { background: #0f1419; padding: 0.75rem; border-radius: 4px; overflow: auto; font-size: 0.8rem; max-height: 240px; }
+    .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: #334155; }
+    .badge.warn { background: var(--warn); color: #000; }
+    .badge.danger { background: var(--danger); }
+  </style>
+</head>
+<body>
+  <h1>Schwerpunkt Operator Console <span class="badge" id="modeBadge">manual</span></h1>
+  <div class="panel" style="margin-bottom:1rem">
+    <label>Session ID <input id="sessionId" placeholder="create or paste session id" /></label>
+    <button onclick="createSession()">New session (contradiction_case)</button>
+    <button class="secondary" onclick="loadFixture()">Load observe fixture</button>
+    <button onclick="advance()">Advance loop</button>
+    <span class="badge" id="phaseBadge">—</span>
+    <span class="badge" id="loopBadge">loop 0</span>
+  </div>
+  <div class="grid">
+    <div class="panel">
+      <h2>World model</h2>
+      <pre id="worldModel">—</pre>
+    </div>
+    <div class="panel">
+      <h2>Contradictions / pending</h2>
+      <pre id="pending">—</pre>
+      <div id="resolveForm" style="display:none">
+        <label>Fact key <input id="factKey" value="case_status" /></label>
+        <label>Value <input id="factValue" value="open" /></label>
+        <label>Rationale <input id="rationale" value="reopened by supervisor" /></label>
+        <button onclick="resolve()">Resolve contradiction</button>
+      </div>
+      <div id="decideForm" style="display:none">
+        <label>Candidate <select id="candidateId"><option value="A">A — Investigate</option><option value="B">B — Close case</option><option value="C">C — Defer</option></select></label>
+        <button onclick="submitDecide()">Submit decision</button>
+      </div>
+      <div id="approveForm" style="display:none">
+        <button onclick="approve()">Approve irreversible (close_case)</button>
+      </div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:1rem">
+    <h2>Audit trail</h2>
+    <pre id="audit">—</pre>
+  </div>
+  <script>
+    const api = (path, opts = {}) => fetch(path, { headers: { 'Content-Type': 'application/json' }, ...opts }).then(r => r.json());
+    const sid = () => document.getElementById('sessionId').value.trim();
+
+    async function refresh() {
+      const id = sid();
+      if (!id) return;
+      const s = await api(`/sessions/${id}`);
+      document.getElementById('phaseBadge').textContent = s.phase;
+      document.getElementById('loopBadge').textContent = 'loop ' + (s.world_model?.loop_count ?? 0);
+      document.getElementById('worldModel').textContent = JSON.stringify(s.world_model, null, 2);
+      const pending = s.pending_operator;
+      document.getElementById('pending').textContent = JSON.stringify(pending || s.last_escalation || {}, null, 2);
+      document.getElementById('resolveForm').style.display = pending?.kind === 'orient' ? 'block' : 'none';
+      document.getElementById('decideForm').style.display = pending?.kind === 'decide' ? 'block' : 'none';
+      document.getElementById('approveForm').style.display = pending?.kind === 'approve' ? 'block' : 'none';
+      const audit = await api(`/sessions/${id}/audit`);
+      document.getElementById('audit').textContent = JSON.stringify(audit, null, 2);
+    }
+
+    async function createSession() {
+      const r = await api('/sessions', { method: 'POST', body: JSON.stringify({ objective: 'Resolve case contradiction', scenario: 'contradiction_case' }) });
+      document.getElementById('sessionId').value = r.session_id;
+      await loadFixture();
+    }
+
+    async function loadFixture() {
+      await api(`/sessions/${sid()}/observe/fixture`, { method: 'POST', body: JSON.stringify({ scenario: 'contradiction_case' }) });
+      await refresh();
+    }
+
+    async function advance() {
+      await api(`/sessions/${sid()}/advance`, { method: 'POST', body: '{}' });
+      await refresh();
+    }
+
+    async function resolve() {
+      await api(`/sessions/${sid()}/resolve`, {
+        method: 'POST',
+        body: JSON.stringify({
+          fact_key: document.getElementById('factKey').value,
+          value: document.getElementById('factValue').value,
+          rationale: document.getElementById('rationale').value,
+        }),
+      });
+      await advance();
+      await refresh();
+    }
+
+    async function submitDecide() {
+      await api(`/sessions/${sid()}/decide`, {
+        method: 'POST',
+        body: JSON.stringify({ candidate_id: document.getElementById('candidateId').value }),
+      });
+      await advance();
+      await refresh();
+    }
+
+    async function approve() {
+      await api(`/sessions/${sid()}/approve`, { method: 'POST', body: JSON.stringify({ action_hash: 'close_case' }) });
+      await advance();
+      await refresh();
+    }
+
+    api('/health').then(h => { document.getElementById('modeBadge').textContent = h.mode; });
+  </script>
+</body>
+</html>
