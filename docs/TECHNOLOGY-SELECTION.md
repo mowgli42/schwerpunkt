@@ -19,7 +19,7 @@ This document evaluates implementation options for the Schwerpunkt conceptual ar
 | API | **FastAPI** | Starlette bare, gRPC |
 | Human-in-the-loop | **LangGraph interrupts + FastAPI SSE** | Custom webhook, Temporal signals |
 | Observability | **OpenTelemetry + structured logs** | LangSmith-only, Datadog-only |
-| Testing | **pytest + pytest-bdd (Gherkin)** | Vitest (if TS stack) |
+| Testing | **pytest + pytest-bdd (Gherkin)** — stub mode in CI, no LLM/MCP | Vitest (if TS stack) |
 
 ---
 
@@ -276,17 +276,18 @@ Orientation must be **structured, queryable, and durable** — not only embedded
 
 **In scope:**
 
-- LangGraph OODA graph with 4 phases + IG&C conditional edge
-- Postgres world model + audit tables
-- FastAPI: start session, SSE escalations, submit human resolution
-- pytest-bdd for three living OpenSpec capabilities
+- `stub` and `manual` modes with CognitionPort (no external AI)
+- SQLite local profile for test and operator demo
+- Operator REST API + console + CLI for manual cognitive steps
+- LangGraph-free OODA loop runner first (LangGraph optional in server profile)
+- pytest-bdd in stub mode only for CI
 
-**Out of scope (Phase 2+):**
+**Out of scope (Phase 1D / later):**
 
-- Operator web UI (Svelte/React)
-- Kafka event bus
-- Multi-tenant RBAC
-- Edge Rust sensor adapters
+- LiveCognition LLM API adapter (`live` mode)
+- MCP bridge (`live` mode only)
+- PostgreSQL server profile (demo uses SQLite)
+- pgvector semantic memory (server profile)
 
 ---
 

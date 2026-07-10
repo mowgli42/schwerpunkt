@@ -32,10 +32,26 @@ Most agent frameworks use a **ReAct** loop: reason → act → observe tool resu
 | Doc | Contents |
 |-----|----------|
 | [docs/CONCEPT.md](docs/CONCEPT.md) | Full concept synthesis from Boyd + modern agent architecture research |
+| [docs/OPERATOR-AND-RUN-MODES.md](docs/OPERATOR-AND-RUN-MODES.md) | **Where operators interact, local demands, stub/manual/live modes** |
 | [docs/architecture.md](docs/architecture.md) | System architecture, data flows, domain objects |
 | [docs/TECHNOLOGY-SELECTION.md](docs/TECHNOLOGY-SELECTION.md) | **Technology options, trade-offs, and recommended stack** |
 | [openspec/WORKFLOW.md](openspec/WORKFLOW.md) | Spec → Beads → implement → verify workflow |
 | [openspec/project.md](openspec/project.md) | Project context for agents |
+
+## Run modes (no AI required for test & demo)
+
+| Mode | Who does Orient/Decide | External AI |
+|------|------------------------|-------------|
+| `stub` | Fixture JSON | None — unit tests & CI |
+| `manual` | **Operator** via console/API/CLI | None — live demos |
+| `live` | LLM API and/or MCP | Optional production path |
+
+```bash
+SCHWERKPUNKT_MODE=manual SCHWERKPUNKT_PROFILE=local uvicorn schwerpunkt.api:app
+# Operator: http://localhost:8000/console — no API keys needed
+```
+
+See **`docs/OPERATOR-AND-RUN-MODES.md`** for interaction surfaces and local system demands.
 
 ## Workflow
 
@@ -57,6 +73,8 @@ npx @fission-ai/openspec validate --specs --strict
 | OODA runtime | [openspec/specs/ooda-runtime/spec.md](openspec/specs/ooda-runtime/spec.md) |
 | Orientation layer | [openspec/specs/orientation-layer/spec.md](openspec/specs/orientation-layer/spec.md) |
 | Human-in-the-loop | [openspec/specs/human-in-the-loop/spec.md](openspec/specs/human-in-the-loop/spec.md) |
+| Runtime modes | [openspec/specs/runtime-modes/spec.md](openspec/specs/runtime-modes/spec.md) |
+| Operator console | [openspec/specs/operator-console/spec.md](openspec/specs/operator-console/spec.md) |
 
 ## License
 

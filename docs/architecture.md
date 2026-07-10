@@ -2,45 +2,77 @@
 
 Conceptual architecture for the OODA agent platform. Implementation follows OpenSpec living specs and the technology choices in [TECHNOLOGY-SELECTION.md](TECHNOLOGY-SELECTION.md).
 
+## Where users interact
+
+See [OPERATOR-AND-RUN-MODES.md](OPERATOR-AND-RUN-MODES.md) for full detail.
+
+| Surface | Mode(s) | External AI |
+|---------|---------|-------------|
+| **Operator Console** (`/console`) | `manual` demo | No |
+| **Operator API** (REST) | `manual`, `stub` tests | No |
+| **CLI** (`schwerpunkt session …`) | `manual`, `stub` | No |
+| **Fixture sensors** | `stub`, `manual` | No |
+| **LLM API adapter** | `live` only | Yes |
+| **MCP bridge** | `live` only | Yes |
+
+## Run modes & local profile
+
+```
+SCHWERKPUNKT_MODE=stub|manual|live
+SCHWERKPUNKT_PROFILE=local|server
+         │
+         ├─ stub  + local  → StubCognition + in-memory/SQLite  (unit tests, CI)
+         ├─ manual + local → ManualCognition + SQLite         (operator demo)
+         └─ live  + server → LiveCognition + Postgres          (production)
+```
+
+**Local demands (test + demo):** Python 3.12+, SQLite file, single process, no API keys, no network.
+
 ## High-level diagram
 
 ```mermaid
 flowchart TB
   subgraph Clients["Clients"]
-    API["FastAPI REST + SSE"]
-    Console["Operator console (Phase 2)"]
+    Console["Operator Console\n(manual demo)"]
+    CLI["CLI\n(manual / stub)"]
+    API["Operator API\nREST + SSE"]
+    MCP["MCP bridge\n(live only)"]
   end
 
-  subgraph Runtime["OODA Runtime (LangGraph)"]
+  subgraph Runtime["OODA Runtime"]
     OBS["Observe\nparallel sensors"]
-    ORI["Orient\nworld model update"]
-    DEC["Decide\ncandidates + risk"]
+    ORI["Orient"]
+    DEC["Decide"]
     ACT["Act\nexecute + verify"]
     OBS --> ORI --> DEC --> ACT
     ACT -.->|feedback| OBS
     ORI -.->|IG&C bypass| ACT
   end
 
+  subgraph Cognition["CognitionPort (injected)"]
+    STUB["StubCognition\ntests"]
+    MAN["ManualCognition\ndemo"]
+    LIVE["LiveCognition\nAPI / MCP"]
+  end
+
   subgraph Schwerpunkt["Orientation Layer (persistent)"]
     WM["WorldModel\nfacts · contradictions · risk"]
-    MEM["Semantic memory\npgvector"]
   end
 
-  subgraph Data["PostgreSQL"]
-    WMDB[(world_model_snapshots)]
-    AUD[(audit_events)]
-    TOK[(approval_tokens)]
-    VEC[(embeddings)]
+  subgraph Data["Store (profile-dependent)"]
+    SQL[(SQLite local)]
+    PG[(PostgreSQL server)]
   end
 
+  Console --> API
+  CLI --> API
+  MCP -.->|live only| LIVE
   API --> Runtime
-  Console -.-> API
+  ORI --> STUB & MAN & LIVE
+  DEC --> STUB & MAN & LIVE
   ORI <--> WM
-  ORI <--> MEM
-  WM --> WMDB
-  ACT --> AUD
-  DEC --> TOK
-  MEM --> VEC
+  WM --> SQL & PG
+  ACT --> SQL & PG
 ```
 
 ## OODA phase responsibilities

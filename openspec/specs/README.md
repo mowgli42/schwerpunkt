@@ -7,6 +7,8 @@ Capabilities map to Boyd OODA phases and cross-cutting concerns.
 | **ooda-runtime** | Full loop | [ooda-runtime/spec.md](ooda-runtime/spec.md) |
 | **orientation-layer** | Orient (schwerpunkt) | [orientation-layer/spec.md](orientation-layer/spec.md) |
 | **human-in-the-loop** | Decide / Act gates | [human-in-the-loop/spec.md](human-in-the-loop/spec.md) |
+| **runtime-modes** | stub / manual / live | [runtime-modes/spec.md](runtime-modes/spec.md) |
+| **operator-console** | Human demo surfaces | [operator-console/spec.md](operator-console/spec.md) |
 
 ## Planned (Phase 1+)
 
@@ -16,6 +18,8 @@ Capabilities map to Boyd OODA phases and cross-cutting concerns.
 | decide-risk-gate | Decide | backlog |
 | act-audit | Act | backlog |
 | implicit-guidance | IG&C fast path | backlog |
+| live-cognition-adapter | Orient / Decide (live only) | backlog |
+| mcp-bridge | Live tool calls | backlog |
 
 ## Workflow
 
