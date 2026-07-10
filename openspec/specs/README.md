@@ -22,6 +22,22 @@ Capabilities map to Boyd OODA phases and cross-cutting concerns.
 | live-cognition-adapter | Orient / Decide (live only) | backlog |
 | mcp-bridge | Live tool calls | backlog |
 
+## Implementation status model
+
+Each requirement SHOULD carry front-matter or inline status:
+
+| Status | Meaning |
+|--------|---------|
+| `specified` | Written in OpenSpec; no code |
+| `implemented` | Code exists; not adversarially tested |
+| `verified` | Gherkin or unit test proves behavior |
+| `deferred` | Explicitly out of current phase |
+
+Requirements SHALL NOT be closed in Beads until `verified` or explicitly deferred.
+
+**Maturity:** L0 Specified → L1 Implemented → L2 Verified → L3 Production.  
+Current repo: **L1** (contradiction demo path). See `docs/GROK-FEEDBACK.md`.
+
 ## Workflow
 
 See [../WORKFLOW.md](../WORKFLOW.md). **Specs first** → Beads issues → implement → Gherkin → archive changes.

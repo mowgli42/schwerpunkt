@@ -9,6 +9,25 @@ from schwerpunkt.models import (
     WorldModel,
 )
 
+NUMERIC_REVISION_TOLERANCE = 0.05
+
+
+def _is_numeric(value: object) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def values_conflict(prior_value: object, new_value: object, tolerance: float = NUMERIC_REVISION_TOLERANCE) -> bool:
+    """Return True when new observation contradicts prior fact (not a minimal belief revision)."""
+    if prior_value == new_value:
+        return False
+    if _is_numeric(prior_value) and _is_numeric(new_value):
+        prior_f = float(prior_value)
+        new_f = float(new_value)
+        if prior_f == 0:
+            return abs(new_f) > tolerance
+        return abs(new_f - prior_f) / abs(prior_f) > tolerance
+    return True
+
 
 def detect_contradictions(observation: Observation, model: WorldModel) -> list[Contradiction]:
     found: list[Contradiction] = []
@@ -16,7 +35,7 @@ def detect_contradictions(observation: Observation, model: WorldModel) -> list[C
         prior = model.known_facts.get(signal.key)
         if prior is None:
             continue
-        if prior.value != signal.value:
+        if values_conflict(prior.value, signal.value):
             severity = "high" if prior.confidence > 0.8 else "low"
             found.append(
                 Contradiction(

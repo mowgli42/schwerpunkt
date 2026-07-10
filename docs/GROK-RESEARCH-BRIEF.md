@@ -1,6 +1,7 @@
 # Grok Research Brief — Adversarial Review of Schwerpunkt
 
 **Purpose:** Feed this document to Grok for additional research, critique, and design feedback.  
+**Grok response:** See [GROK-FEEDBACK.md](GROK-FEEDBACK.md) (from [share link](https://grok.com/share/c2hhcmQtMg_70db4f3d-38b4-4377-b3f8-62af1efd8be9)).  
 **Repo:** https://github.com/mowgli42/schwerpunkt  
 **Concept source:** [Boyd OODA Loop Agility AI Insights](https://grok.com/share/c2hhcmQtMg_431da025-0818-430c-90ee-b21f66bd5a56)  
 **Review date:** 2026-07-10

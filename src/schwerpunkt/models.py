@@ -73,7 +73,9 @@ class CandidateAction(BaseModel):
     name: str
     risk_class: RiskClass = RiskClass.REVERSIBLE
     expected_cost: float = 1.0
+    expected_value: float = 1.0
     action_hash: str | None = None
+    expected_effects: dict[str, Any] = Field(default_factory=dict)
 
 
 class Escalation(BaseModel):
@@ -132,6 +134,8 @@ class WorldModel(BaseModel):
     elapsed_ms: int = 0
     objective_complete: bool = False
     pending_hypotheses: list[str] = Field(default_factory=list)
+    high_stakes: bool = False
+    velocity_checkpoint_interval: int = 10
 
     def model_copy_update(self, **kwargs: Any) -> WorldModel:
         return self.model_copy(update=kwargs)

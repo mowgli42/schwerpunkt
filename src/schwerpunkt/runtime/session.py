@@ -199,9 +199,15 @@ class SessionManager:
                 self._persist(session)
                 return session
 
-            # IG&C check
+            # IG&C fast path: stub by default; manual only when SCHWERKPUNKT_IGC_MANUAL=1
+            import os
+
+            igc_manual = os.environ.get("SCHWERKPUNKT_IGC_MANUAL") == "1"
+            igc_allowed = self.settings.mode == RunMode.STUB or (
+                self.settings.mode == RunMode.MANUAL and igc_manual
+            )
             rule = self.igc.evaluate(session, obs, orientation.orientation_confidence)
-            if rule and self.settings.mode in (RunMode.STUB, RunMode.MANUAL):
+            if rule and igc_allowed and not session.world_model.high_stakes:
                 decision = Decision(
                     action=CandidateAction(
                         id="igc",
@@ -214,7 +220,18 @@ class SessionManager:
                 )
                 session.igc_rule_id = rule.pattern_id
                 session.decision = decision
-                session, _ = execute_action(session, decision)
+                session, _ = execute_action(session, decision, self.store)
+                self._persist(session)
+                return session
+
+            if self._velocity_checkpoint_required(session):
+                from schwerpunkt.models import OperatorRequest
+
+                session.pending_operator = OperatorRequest(
+                    kind="velocity_checkpoint",
+                    payload={"loop_count": session.world_model.loop_count},
+                )
+                session.phase = Phase.PAUSED
                 self._persist(session)
                 return session
 
@@ -241,7 +258,7 @@ class SessionManager:
 
         # Act
         if session.phase == Phase.ACT and session.decision:
-            session, _ = execute_action(session, session.decision)
+            session, _ = execute_action(session, session.decision, self.store)
             self._persist(session)
             return session
 
@@ -296,9 +313,28 @@ class SessionManager:
 
         if isinstance(self.cognition, ManualCognition):
             candidates = [
-                CandidateAction(id="A", name="Investigate", risk_class=RiskClass.REVERSIBLE, expected_cost=1),
-                CandidateAction(id="B", name="Close case", risk_class=RiskClass.IRREVERSIBLE, expected_cost=5, action_hash="close_case"),
-                CandidateAction(id="C", name="Defer", risk_class=RiskClass.REVERSIBLE, expected_cost=0.5),
+                CandidateAction(
+                    id="A",
+                    name="Investigate",
+                    risk_class=RiskClass.REVERSIBLE,
+                    expected_cost=1,
+                    expected_value=3,
+                ),
+                CandidateAction(
+                    id="B",
+                    name="Close case",
+                    risk_class=RiskClass.IRREVERSIBLE,
+                    expected_cost=5,
+                    expected_value=5,
+                    action_hash="close_case",
+                ),
+                CandidateAction(
+                    id="C",
+                    name="Defer",
+                    risk_class=RiskClass.REVERSIBLE,
+                    expected_cost=0.5,
+                    expected_value=1,
+                ),
             ]
             if not session.operator_decide_id:
                 from schwerpunkt.models import OperatorRequest
@@ -319,7 +355,7 @@ class SessionManager:
                 )
                 return Decision(alternatives_considered=candidates)
             session.operator_decide_id = None
-            return decide_with_risk(orientation, candidates, token)
+            return decide_with_risk(orientation, candidates, token, chosen=chosen)
 
         if isinstance(self.cognition, StubCognition):
             return await self.cognition.decide(session, orientation)
@@ -331,6 +367,15 @@ class SessionManager:
         if not session:
             raise KeyError(f"session not found: {session_id}")
         return session
+
+    def _velocity_checkpoint_required(self, session: SessionState) -> bool:
+        wm = session.world_model
+        if not wm.high_stakes:
+            return False
+        interval = wm.velocity_checkpoint_interval
+        if interval <= 0:
+            return False
+        return wm.loop_count > 0 and wm.loop_count % interval == 0
 
 
 # Singleton for API
