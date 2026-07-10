@@ -1,0 +1,16 @@
+schema: spec-driven
+
+context: |
+  Schwerpunkt: Boyd OODA loop agent platform (orientation-first, conceptual Phase 0).
+  Stack: Python 3.12+, LangGraph, FastAPI, PostgreSQL+pgvector, OpenSpec, Beads.
+  Orientation is the schwerpunkt — persistent world model, not ReAct chain-of-thought.
+  See openspec/project.md, docs/CONCEPT.md, docs/TECHNOLOGY-SELECTION.md.
+
+rules:
+  proposal:
+    - Link to Grok concept URL when proposing OODA behavior changes
+    - Always include Non-goals section
+    - Reference TECHNOLOGY-SELECTION.md if stack impact
+  tasks:
+    - Map tasks to OpenSpec spec paths (--spec-id)
+    - Break into implementable chunks under one OODA phase each

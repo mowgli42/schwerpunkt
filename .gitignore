@@ -1,5 +1,18 @@
+# Dependencies
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
 
-# Beads / Dolt files (added by bd init)
-.dolt/
-*.db
-.beads-credential-key
+# IDE
+.idea/
+.vscode/
+
+# Beads local DB (JSONL is tracked)
+.beads/embeddeddolt/
+.beads/*.db
+
+# OS
+.DS_Store
