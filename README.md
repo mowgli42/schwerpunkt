@@ -8,7 +8,28 @@
 
 ## Status
 
-Conceptual / pre-implementation. No runtime code yet — specifications, architecture, and technology selection drive what gets built.
+**Phase 1 vertical slice — L1 Implemented, moving toward L2 Verified.**
+
+Runnable stub/manual modes, operator console, contradiction demo, and adversarial Gherkin coverage. Not yet a Boyd OODA reference implementation — see maturity matrix below.
+
+| Artifact | State |
+|----------|-------|
+| OpenSpec (6 capabilities) | Validated (`openspec validate --strict`) |
+| Implementation | Python OODA runtime + SQLite |
+| Demo | `contradiction_case` end-to-end (CLI + console) |
+| Tests | 23 passing (unit + Gherkin) |
+| Live LLM/MCP | Phase 1D backlog |
+
+## Maturity matrix (L0 → L3)
+
+| Level | Name | Schwerpunkt today |
+|-------|------|-------------------|
+| **L0** | Specified | OpenSpec + Beads define full Boyd platform |
+| **L1** | Implemented | Stub/manual runtime, IG&C rules, operator surfaces |
+| **L2** | Verified | Partial — `human-in-the-loop.feature`, contradiction demo |
+| **L3** | Production | Not started — auth, WORM audit, LangGraph, SSE |
+
+**Honest scope:** The living specs describe a production-grade platform. The code is a **credible demo scaffold** with good bones. See [docs/GROK-FEEDBACK.md](docs/GROK-FEEDBACK.md) for adversarial review and prioritized gaps.
 
 ## What this is
 
@@ -17,7 +38,8 @@ Conceptual / pre-implementation. No runtime code yet — specifications, archite
 | **Concept** | Boyd OODA applied to agentic AI: Observe → Orient → Decide → Act with implicit guidance, contradiction detection, and human-in-the-loop gates |
 | **OpenSpec** | Living Gherkin-style requirements in `openspec/specs/` |
 | **Beads** | Epic/task breakdown in `.beads/` (`bd ready` for next work item) |
-| **Docs** | Architecture, technology trade-offs, and selection rationale |
+| **Runtime** | `src/schwerpunkt/` — session manager, orientation engine, operator API |
+| **Docs** | Architecture, technology trade-offs, operator run modes, research briefs |
 
 ## Core insight (vs ReAct)
 
@@ -27,63 +49,93 @@ Most agent frameworks use a **ReAct** loop: reason → act → observe tool resu
 2. **Implicit Guidance & Control (IG&C)** — trained patterns can skip explicit Decide when confidence and risk allow
 3. **Observation quality gates decisions** — low-confidence sensing triggers escalation, not blind action
 
+## Run modes (no AI required for test & demo)
+
+| Mode | Who does Orient/Decide | IG&C | External AI |
+|------|------------------------|------|-------------|
+| `stub` | Fixture JSON | Enabled | None — unit tests & CI |
+| `manual` | **Operator** via console/API/CLI | Disabled by default | None — live demos |
+| `live` | LLM API and/or MCP | TBD | Phase 1D |
+
+```bash
+SCHWERKPUNKT_MODE=manual SCHWERKPUNKT_PROFILE=local uvicorn schwerpunkt.api.app:app --reload
+# Operator console: http://127.0.0.1:8000/console — no API keys needed
+```
+
+Set `SCHWERKPUNKT_IGC_MANUAL=1` to enable IG&C fast-path in manual mode (opt-in for demos).
+
+See [docs/OPERATOR-AND-RUN-MODES.md](docs/OPERATOR-AND-RUN-MODES.md) for interaction surfaces and local system demands.
+
+## Quick start
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+
+make demo          # headless contradiction_case demo (no AI)
+make test          # unit + Gherkin
+make spec          # OpenSpec strict validation
+
+# Browser operator console
+SCHWERKPUNKT_MODE=manual uvicorn schwerpunkt.api.app:app --reload
+# → http://127.0.0.1:8000/console
+```
+
+### Console workflow
+
+1. **New session** — creates `contradiction_case` and loads observe fixture
+2. **Advance loop** — runs until a sensemaking checkpoint (contradiction, decide, approve, or velocity guard)
+3. **World model panel** — facts, contradictions, risk budget, loop count
+4. **Resolve / Decide / Approve** — operator actions per pending checkpoint
+5. **Audit trail** — intent/outcome events for the session
+
+See [docs/DEMO-WALKTHROUGH.md](docs/DEMO-WALKTHROUGH.md) for step-by-step instructions.
+
 ## Documentation
 
 | Doc | Contents |
 |-----|----------|
 | [docs/CONCEPT.md](docs/CONCEPT.md) | Full concept synthesis from Boyd + modern agent architecture research |
-| [docs/OPERATOR-AND-RUN-MODES.md](docs/OPERATOR-AND-RUN-MODES.md) | **Where operators interact, local demands, stub/manual/live modes** |
+| [docs/OPERATOR-AND-RUN-MODES.md](docs/OPERATOR-AND-RUN-MODES.md) | Operator surfaces, local demands, stub/manual/live modes |
+| [docs/DEMO-WALKTHROUGH.md](docs/DEMO-WALKTHROUGH.md) | Demo scripts and console walkthrough |
+| [docs/GROK-FEEDBACK.md](docs/GROK-FEEDBACK.md) | Grok adversarial review response + Phase 2 scope |
+| [docs/GROK-RESEARCH-BRIEF.md](docs/GROK-RESEARCH-BRIEF.md) | Spec vs implementation gap analysis |
 | [docs/architecture.md](docs/architecture.md) | System architecture, data flows, domain objects |
-| [docs/TECHNOLOGY-SELECTION.md](docs/TECHNOLOGY-SELECTION.md) | **Technology options, trade-offs, and recommended stack** |
+| [docs/TECHNOLOGY-SELECTION.md](docs/TECHNOLOGY-SELECTION.md) | Technology options, trade-offs, recommended stack |
 | [openspec/WORKFLOW.md](openspec/WORKFLOW.md) | Spec → Beads → implement → verify workflow |
-| [openspec/project.md](openspec/project.md) | Project context for agents |
-
-## Run modes (no AI required for test & demo)
-
-| Mode | Who does Orient/Decide | External AI |
-|------|------------------------|-------------|
-| `stub` | Fixture JSON | None — unit tests & CI |
-| `manual` | **Operator** via console/API/CLI | None — live demos |
-| `live` | LLM API and/or MCP | Optional production path |
-
-```bash
-SCHWERKPUNKT_MODE=manual SCHWERKPUNKT_PROFILE=local uvicorn schwerpunkt.api:app
-# Operator: http://localhost:8000/console — no API keys needed
-```
-
-See **`docs/OPERATOR-AND-RUN-MODES.md`** for interaction surfaces and local system demands.
-
-## Quick start (demo)
-
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-./scripts/demo-manual.sh          # headless operator demo (no AI)
-uvicorn schwerpunkt.api.app:app --reload  # browser console at /console
-pytest tests/ -q                  # unit + Gherkin verification
-```
-
-```bash
-# Issue tracking
-bd ready                    # next task
-bd list                     # full hierarchy
-bd show schwerpunkt-<id>    # task detail
-
-# Specification
-npx @fission-ai/openspec validate --specs --strict
-```
 
 ## Living specs
 
-| Capability | Spec |
-|------------|------|
-| Index | [openspec/specs/README.md](openspec/specs/README.md) |
-| OODA runtime | [openspec/specs/ooda-runtime/spec.md](openspec/specs/ooda-runtime/spec.md) |
-| Orientation layer | [openspec/specs/orientation-layer/spec.md](openspec/specs/orientation-layer/spec.md) |
-| Human-in-the-loop | [openspec/specs/human-in-the-loop/spec.md](openspec/specs/human-in-the-loop/spec.md) |
-| Runtime modes | [openspec/specs/runtime-modes/spec.md](openspec/specs/runtime-modes/spec.md) |
-| Operator console | [openspec/specs/operator-console/spec.md](openspec/specs/operator-console/spec.md) |
+| Capability | Spec | Gherkin |
+|------------|------|---------|
+| Index | [openspec/specs/README.md](openspec/specs/README.md) | — |
+| OODA runtime | [ooda-runtime/spec.md](openspec/specs/ooda-runtime/spec.md) | partial |
+| Orientation layer | [orientation-layer/spec.md](openspec/specs/orientation-layer/spec.md) | partial |
+| Human-in-the-loop | [human-in-the-loop/spec.md](openspec/specs/human-in-the-loop/spec.md) | [features/human-in-the-loop.feature](features/human-in-the-loop.feature) |
+| Runtime modes | [runtime-modes/spec.md](openspec/specs/runtime-modes/spec.md) | [features/runtime-modes.feature](features/runtime-modes.feature) |
+| Operator console | [operator-console/spec.md](openspec/specs/operator-console/spec.md) | via API tests |
+| Demo scenarios | [demo-scenarios/spec.md](openspec/specs/demo-scenarios/spec.md) | fixtures |
+
+```bash
+bd ready                    # next Beads task
+npx @fission-ai/openspec validate --specs --strict
+```
+
+## Implemented vs backlog
+
+| Area | Status |
+|------|--------|
+| Contradiction detection + human resolution | Done |
+| Belief revision (numeric tolerance) | Done |
+| Approval token consume at Act | Done |
+| Act→Observe discrepancy feedback | Done |
+| Velocity guard (high_stakes) | Done |
+| Operator console (world model view) | Done |
+| Live LLM / MCP adapters | Phase 1D |
+| LangGraph orchestration | Deferred |
+| SSE escalations | Spec only |
+| Postgres server profile | Phase 1D |
 
 ## License
 
-MIT (conceptual documentation and specs; implementation TBD)
+MIT

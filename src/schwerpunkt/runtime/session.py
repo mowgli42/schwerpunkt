@@ -161,6 +161,16 @@ class SessionManager:
         self._persist(session)
         return token
 
+    def acknowledge_checkpoint(self, session_id: str, actor: str = "operator") -> SessionState:
+        session = self._require(session_id)
+        if not session.pending_operator or session.pending_operator.kind != "velocity_checkpoint":
+            return session
+        session.pending_operator = None
+        session.phase = Phase.DECIDE
+        session.log("velocity_checkpoint_ack", {"loop_count": session.world_model.loop_count}, actor=actor)
+        self._persist(session)
+        return session
+
     async def run_step(self, session_id: str) -> SessionState:
         session = self._require(session_id)
         if session.world_model.objective_complete:

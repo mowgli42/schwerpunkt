@@ -104,8 +104,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             token = mgr.approve(session_id, body.action_hash, body.actor)
         except KeyError:
             raise HTTPException(404, "session not found")
-        mgr.manual[session_id].approval_token = token
         return {"approval_token": token}
+
+    @app.post("/sessions/{session_id}/checkpoint")
+    def checkpoint(session_id: str) -> dict:
+        try:
+            session = mgr.acknowledge_checkpoint(session_id)
+        except KeyError:
+            raise HTTPException(404, "session not found")
+        return {"phase": session.phase.value, "acknowledged": True}
 
     @app.post("/sessions/{session_id}/advance")
     async def advance(session_id: str) -> dict:

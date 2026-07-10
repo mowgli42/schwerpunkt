@@ -112,8 +112,8 @@ Add `implementation_status` per requirement: `specified | implemented | verified
 - [x] Fix manual Decide to honor operator candidate choice
 - [x] Add `features/human-in-the-loop.feature` + unit tests
 - [ ] Reopen Beads tasks for SSE, velocity guard full spec, LangGraph
-- [ ] Add maturity matrix (L0–L3) to README
-- [ ] Operator console world-model view
+- [x] Add maturity matrix (L0–L3) to README
+- [x] Operator console (world model + contradiction view)
 
 ---
 

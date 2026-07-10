@@ -5,78 +5,420 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Schwerpunkt Operator Console</title>
   <style>
-    :root { --bg: #0f1419; --panel: #1a2332; --text: #e7ecf3; --accent: #3d9a8b; --warn: #c9a227; --danger: #c75050; }
+    :root {
+      --bg: #0c1017;
+      --panel: #151c28;
+      --panel-2: #1c2535;
+      --border: #2a3548;
+      --text: #e8edf4;
+      --muted: #8b97a8;
+      --accent: #2d8f7f;
+      --accent-dim: #1f6358;
+      --warn: #c9a227;
+      --danger: #c75050;
+      --ok: #4caf82;
+      --phase-observe: #5b8def;
+      --phase-orient: #9b6dd7;
+      --phase-decide: #e8a838;
+      --phase-act: #2d8f7f;
+      --phase-paused: #c9a227;
+    }
     * { box-sizing: border-box; }
-    body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 1rem; }
-    h1 { font-size: 1.25rem; margin: 0 0 1rem; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
-    .panel { background: var(--panel); border-radius: 8px; padding: 1rem; }
-    .panel h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; margin: 0 0 0.75rem; }
-    button { background: var(--accent); color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-right: 0.5rem; margin-top: 0.5rem; }
-    button.secondary { background: #334155; }
-    input, select { background: #0f1419; border: 1px solid #334155; color: var(--text); padding: 0.4rem; border-radius: 4px; width: 100%; margin: 0.25rem 0; }
-    pre { background: #0f1419; padding: 0.75rem; border-radius: 4px; overflow: auto; font-size: 0.8rem; max-height: 240px; }
-    .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: #334155; }
-    .badge.warn { background: var(--warn); color: #000; }
-    .badge.danger { background: var(--danger); }
+    body {
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 1rem 1.25rem 2rem;
+      line-height: 1.45;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 { font-size: 1.15rem; font-weight: 600; margin: 0; letter-spacing: 0.02em; }
+    .subtitle { color: var(--muted); font-size: 0.8rem; width: 100%; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+    }
+    .badge.mode { color: var(--accent); border-color: var(--accent-dim); }
+    .badge.phase-observe { color: var(--phase-observe); }
+    .badge.phase-orient { color: var(--phase-orient); }
+    .badge.phase-decide { color: var(--phase-decide); }
+    .badge.phase-act { color: var(--phase-act); }
+    .badge.phase-paused { color: var(--phase-paused); }
+    .badge.warn { background: rgba(201,162,39,0.15); color: var(--warn); border-color: var(--warn); }
+    .badge.danger { background: rgba(199,80,80,0.15); color: var(--danger); border-color: var(--danger); }
+    .badge.ok { background: rgba(76,175,130,0.12); color: var(--ok); border-color: var(--ok); }
+
+    .toolbar {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: flex-end;
+    }
+    .toolbar label { font-size: 0.75rem; color: var(--muted); display: block; margin-bottom: 0.2rem; }
+    .toolbar .field { flex: 1 1 200px; min-width: 160px; }
+    input, select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.45rem 0.55rem;
+      border-radius: 4px;
+      width: 100%;
+      font: inherit;
+      font-size: 0.85rem;
+    }
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0.5rem 0.9rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+    button:hover { filter: brightness(1.08); }
+    button.secondary { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); }
+    button.warn { background: var(--warn); color: #1a1200; }
+
+    .checkpoint-banner {
+      display: none;
+      background: rgba(201,162,39,0.1);
+      border: 1px solid var(--warn);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .checkpoint-banner.visible { display: block; }
+    .checkpoint-banner h3 { margin: 0 0 0.35rem; font-size: 0.9rem; color: var(--warn); }
+    .checkpoint-banner p { margin: 0; font-size: 0.85rem; color: var(--muted); }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 0.65rem;
+      margin-bottom: 1rem;
+    }
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.65rem 0.75rem;
+    }
+    .metric .label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .metric .value { font-size: 1.1rem; font-weight: 600; margin-top: 0.15rem; font-variant-numeric: tabular-nums; }
+
+    .grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+    }
+    .panel h2 {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin: 0 0 0.75rem;
+      font-weight: 600;
+    }
+    .panel + .panel { margin-top: 1rem; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th, td { text-align: left; padding: 0.45rem 0.5rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 500; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    tr:last-child td { border-bottom: none; }
+    .conf-bar {
+      display: inline-block;
+      width: 48px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-left: 0.35rem;
+    }
+    .conf-bar span { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+
+    .contradiction-card {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--danger);
+      border-radius: 4px;
+      padding: 0.65rem 0.75rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.82rem;
+    }
+    .contradiction-card.low { border-left-color: var(--warn); }
+    .contradiction-card .key { font-weight: 600; }
+    .contradiction-card .values { color: var(--muted); margin-top: 0.25rem; }
+    .empty { color: var(--muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0; }
+
+    .action-form {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+    .action-form label { display: block; font-size: 0.75rem; color: var(--muted); margin: 0.4rem 0 0.2rem; }
+    .action-form button { margin-top: 0.65rem; }
+
+    .audit-list { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow: auto; }
+    .audit-list li {
+      font-size: 0.78rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.5rem;
+    }
+    .audit-list .etype { color: var(--accent); font-weight: 500; white-space: nowrap; }
+    .audit-list .epayload { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .objective { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
   </style>
 </head>
 <body>
-  <h1>Schwerpunkt Operator Console <span class="badge" id="modeBadge">manual</span></h1>
-  <div class="panel" style="margin-bottom:1rem">
-    <label>Session ID <input id="sessionId" placeholder="create or paste session id" /></label>
-    <button onclick="createSession()">New session (contradiction_case)</button>
-    <button class="secondary" onclick="loadFixture()">Load observe fixture</button>
+  <header>
+    <h1>Schwerpunkt Operator Console</h1>
+    <span class="badge mode" id="modeBadge">—</span>
+    <span class="badge" id="phaseBadge">phase —</span>
+    <span class="badge" id="stakesBadge" style="display:none">high stakes</span>
+    <p class="subtitle">Sensemaking checkpoint — orientation is the schwerpunkt. Resolve contradictions before deciding.</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="field">
+      <label for="sessionId">Session ID</label>
+      <input id="sessionId" placeholder="create or paste session id" />
+    </div>
+    <button onclick="createSession()">New session</button>
+    <button class="secondary" onclick="loadFixture()">Load fixture</button>
     <button onclick="advance()">Advance loop</button>
-    <span class="badge" id="phaseBadge">—</span>
-    <span class="badge" id="loopBadge">loop 0</span>
+    <button class="secondary" onclick="refresh()">Refresh</button>
   </div>
+
+  <div class="checkpoint-banner" id="checkpointBanner">
+    <h3 id="checkpointTitle">Sensemaking checkpoint</h3>
+    <p id="checkpointDetail">—</p>
+  </div>
+
+  <div class="metrics" id="metrics">
+    <div class="metric"><div class="label">Loop count</div><div class="value" id="mLoop">0</div></div>
+    <div class="metric"><div class="label">Risk budget</div><div class="value" id="mRisk">—</div></div>
+    <div class="metric"><div class="label">Orientation conf.</div><div class="value" id="mOrient">—</div></div>
+    <div class="metric"><div class="label">Contradictions</div><div class="value" id="mContradictions">0</div></div>
+    <div class="metric"><div class="label">Facts</div><div class="value" id="mFacts">0</div></div>
+  </div>
+
   <div class="grid">
-    <div class="panel">
-      <h2>World model</h2>
-      <pre id="worldModel">—</pre>
+    <div>
+      <div class="panel">
+        <h2>World model — known facts</h2>
+        <div class="objective" id="objective">—</div>
+        <div id="factsTable"><p class="empty">No session loaded</p></div>
+      </div>
+      <div class="panel">
+        <h2>Human resolutions</h2>
+        <div id="resolutionsList"><p class="empty">None</p></div>
+      </div>
     </div>
-    <div class="panel">
-      <h2>Contradictions / pending</h2>
-      <pre id="pending">—</pre>
-      <div id="resolveForm" style="display:none">
-        <label>Fact key <input id="factKey" value="case_status" /></label>
-        <label>Value <input id="factValue" value="open" /></label>
-        <label>Rationale <input id="rationale" value="reopened by supervisor" /></label>
-        <button onclick="resolve()">Resolve contradiction</button>
+
+    <div>
+      <div class="panel">
+        <h2>Contradictions</h2>
+        <div id="contradictionsList"><p class="empty">No active contradictions</p></div>
+
+        <div id="resolveForm" class="action-form" style="display:none">
+          <strong>Resolve contradiction</strong>
+          <label>Fact key <input id="factKey" value="case_status" /></label>
+          <label>Value <input id="factValue" value="open" /></label>
+          <label>Rationale <input id="rationale" value="reopened by supervisor" /></label>
+          <button onclick="resolve()">Resolve &amp; advance</button>
+        </div>
+
+        <div id="decideForm" class="action-form" style="display:none">
+          <strong>Select decision candidate</strong>
+          <label>Candidate
+            <select id="candidateId">
+              <option value="A">A — Investigate (reversible)</option>
+              <option value="B">B — Close case (irreversible)</option>
+              <option value="C">C — Defer (reversible)</option>
+            </select>
+          </label>
+          <button onclick="submitDecide()">Submit decision &amp; advance</button>
+        </div>
+
+        <div id="approveForm" class="action-form" style="display:none">
+          <strong>Approve irreversible action</strong>
+          <p class="empty" style="font-style:normal">Token required before Act can execute <code>close_case</code>.</p>
+          <button class="warn" onclick="approve()">Issue approval token</button>
+        </div>
+
+        <div id="velocityForm" class="action-form" style="display:none">
+          <strong>Velocity checkpoint</strong>
+          <p class="empty" style="font-style:normal">High-stakes session reached loop interval — confirm sensemaking before Decide.</p>
+          <button onclick="ackCheckpoint()">Acknowledge checkpoint</button>
+        </div>
       </div>
-      <div id="decideForm" style="display:none">
-        <label>Candidate <select id="candidateId"><option value="A">A — Investigate</option><option value="B">B — Close case</option><option value="C">C — Defer</option></select></label>
-        <button onclick="submitDecide()">Submit decision</button>
-      </div>
-      <div id="approveForm" style="display:none">
-        <button onclick="approve()">Approve irreversible (close_case)</button>
+
+      <div class="panel">
+        <h2>Last observation</h2>
+        <div id="observationView"><p class="empty">—</p></div>
       </div>
     </div>
   </div>
+
   <div class="panel" style="margin-top:1rem">
     <h2>Audit trail</h2>
-    <pre id="audit">—</pre>
+    <ul class="audit-list" id="auditList"><li class="empty">—</li></ul>
   </div>
+
   <script>
-    const api = (path, opts = {}) => fetch(path, { headers: { 'Content-Type': 'application/json' }, ...opts }).then(r => r.json());
+    const api = (path, opts = {}) =>
+      fetch(path, { headers: { 'Content-Type': 'application/json' }, ...opts }).then(async r => {
+        if (!r.ok) throw new Error(await r.text());
+        return r.json();
+      });
     const sid = () => document.getElementById('sessionId').value.trim();
+    const pct = n => Math.round((n ?? 0) * 100) + '%';
+
+    function phaseClass(phase) {
+      const map = { observe: 'phase-observe', orient: 'phase-orient', decide: 'phase-decide', act: 'phase-act', paused: 'phase-paused', escalated: 'phase-paused' };
+      return map[phase] || '';
+    }
+
+    function renderFacts(wm) {
+      const facts = wm?.known_facts || {};
+      const keys = Object.keys(facts);
+      if (!keys.length) return '<p class="empty">No facts in world model</p>';
+      const rows = keys.map(k => {
+        const f = facts[k];
+        const conf = f.confidence ?? 0;
+        return `<tr>
+          <td><code>${esc(k)}</code></td>
+          <td>${esc(String(f.value))}</td>
+          <td>${pct(conf)}<span class="conf-bar"><span style="width:${pct(conf)}"></span></span></td>
+        </tr>`;
+      }).join('');
+      return `<table><thead><tr><th>Key</th><th>Value</th><th>Confidence</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    function renderContradictions(list) {
+      if (!list?.length) return '<p class="empty">No active contradictions</p>';
+      return list.map(c => `
+        <div class="contradiction-card ${c.severity === 'low' ? 'low' : ''}">
+          <div class="key">${esc(c.key)} <span class="badge ${c.severity === 'high' ? 'danger' : 'warn'}">${esc(c.severity)}</span></div>
+          <div class="values">Prior: <strong>${esc(String(c.prior_value))}</strong> (${pct(c.prior_confidence)}) → New: <strong>${esc(String(c.new_value))}</strong></div>
+        </div>`).join('');
+    }
+
+    function renderResolutions(list) {
+      if (!list?.length) return '<p class="empty">None</p>';
+      return list.map(r => `<div class="contradiction-card" style="border-left-color:var(--ok)">
+        <div class="key">${esc(r.key)} = ${esc(String(r.value))}</div>
+        <div class="values">${esc(r.rationale)} <em>(${esc(r.actor)})</em></div>
+      </div>`).join('');
+    }
+
+    function renderObservation(obs) {
+      if (!obs) return '<p class="empty">No observation</p>';
+      const signals = (obs.signals || []).map(s =>
+        `<tr><td><code>${esc(s.key)}</code></td><td>${esc(String(s.value))}</td><td>${pct(s.confidence)}</td><td>${esc(s.source || '—')}</td></tr>`
+      ).join('');
+      return `<p style="font-size:0.8rem;color:var(--muted);margin:0 0 0.5rem">Confidence ${pct(obs.confidence)}${obs.pattern_id ? ' · ' + esc(obs.pattern_id) : ''}</p>
+        ${signals ? `<table><thead><tr><th>Signal</th><th>Value</th><th>Conf.</th><th>Source</th></tr></thead><tbody>${signals}</tbody></table>` : '<p class="empty">No signals</p>'}`;
+    }
+
+    function renderAudit(events) {
+      if (!events?.length) return '<li class="empty">No audit events</li>';
+      return events.map(e => `<li><span class="etype">${esc(e.event_type)}</span><span class="epayload" title="${esc(JSON.stringify(e.payload))}">${esc(e.actor || 'system')} · ${esc(JSON.stringify(e.payload).slice(0, 80))}</span></li>`).join('');
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function showCheckpoint(pending, escalation) {
+      const banner = document.getElementById('checkpointBanner');
+      const title = document.getElementById('checkpointTitle');
+      const detail = document.getElementById('checkpointDetail');
+      const kinds = {
+        orient: ['Contradiction review required', 'Orientation confidence is low — resolve contradictions before Decide.'],
+        decide: ['Decision checkpoint', 'Select a candidate action to proceed.'],
+        approve: ['Approval required', 'Irreversible action pending — issue approval token.'],
+        velocity_checkpoint: ['Velocity guard', 'High-stakes loop interval reached — acknowledge before Decide.'],
+      };
+      if (pending && kinds[pending.kind]) {
+        banner.classList.add('visible');
+        title.textContent = kinds[pending.kind][0];
+        detail.textContent = kinds[pending.kind][1];
+      } else if (escalation) {
+        banner.classList.add('visible');
+        title.textContent = 'Escalation: ' + escalation.reason;
+        detail.textContent = JSON.stringify(escalation.context || {});
+      } else {
+        banner.classList.remove('visible');
+      }
+    }
 
     async function refresh() {
       const id = sid();
       if (!id) return;
       const s = await api(`/sessions/${id}`);
-      document.getElementById('phaseBadge').textContent = s.phase;
-      document.getElementById('loopBadge').textContent = 'loop ' + (s.world_model?.loop_count ?? 0);
-      document.getElementById('worldModel').textContent = JSON.stringify(s.world_model, null, 2);
+      const wm = s.world_model || {};
+      const phase = s.phase || '—';
+
+      const phaseEl = document.getElementById('phaseBadge');
+      phaseEl.textContent = 'phase ' + phase;
+      phaseEl.className = 'badge ' + phaseClass(phase);
+
+      document.getElementById('stakesBadge').style.display = wm.high_stakes ? 'inline-flex' : 'none';
+      document.getElementById('mLoop').textContent = wm.loop_count ?? 0;
+      document.getElementById('mRisk').textContent = wm.risk_budget_remaining ?? '—';
+      document.getElementById('mOrient').textContent = s.orientation ? pct(s.orientation.orientation_confidence) : '—';
+      document.getElementById('mContradictions').textContent = (wm.contradictions || []).length;
+      document.getElementById('mFacts').textContent = Object.keys(wm.known_facts || {}).length;
+      document.getElementById('objective').textContent = wm.task_objective ? 'Objective: ' + wm.task_objective : '';
+
+      document.getElementById('factsTable').innerHTML = renderFacts(wm);
+      document.getElementById('contradictionsList').innerHTML = renderContradictions(wm.contradictions);
+      document.getElementById('resolutionsList').innerHTML = renderResolutions(wm.human_resolved_facts);
+      document.getElementById('observationView').innerHTML = renderObservation(s.observation);
+
       const pending = s.pending_operator;
-      document.getElementById('pending').textContent = JSON.stringify(pending || s.last_escalation || {}, null, 2);
       document.getElementById('resolveForm').style.display = pending?.kind === 'orient' ? 'block' : 'none';
       document.getElementById('decideForm').style.display = pending?.kind === 'decide' ? 'block' : 'none';
       document.getElementById('approveForm').style.display = pending?.kind === 'approve' ? 'block' : 'none';
+      document.getElementById('velocityForm').style.display = pending?.kind === 'velocity_checkpoint' ? 'block' : 'none';
+      showCheckpoint(pending, s.last_escalation);
+
       const audit = await api(`/sessions/${id}/audit`);
-      document.getElementById('audit').textContent = JSON.stringify(audit, null, 2);
+      document.getElementById('auditList').innerHTML = renderAudit(audit.events || []);
     }
 
     async function createSession() {
@@ -105,7 +447,6 @@
         }),
       });
       await advance();
-      await refresh();
     }
 
     async function submitDecide() {
@@ -114,16 +455,19 @@
         body: JSON.stringify({ candidate_id: document.getElementById('candidateId').value }),
       });
       await advance();
-      await refresh();
     }
 
     async function approve() {
       await api(`/sessions/${sid()}/approve`, { method: 'POST', body: JSON.stringify({ action_hash: 'close_case' }) });
       await advance();
-      await refresh();
     }
 
-    api('/health').then(h => { document.getElementById('modeBadge').textContent = h.mode; });
+    async function ackCheckpoint() {
+      await api(`/sessions/${sid()}/checkpoint`, { method: 'POST', body: '{}' });
+      await advance();
+    }
+
+    api('/health').then(h => { document.getElementById('modeBadge').textContent = h.mode; }).catch(() => {});
   </script>
 </body>
 </html>

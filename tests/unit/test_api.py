@@ -31,7 +31,12 @@ def test_api_manual_flow(stub_settings):
 
     r = client.get("/console")
     assert r.status_code == 200
-    assert "Operator Console" in r.text
+    html = r.text
+    assert "Operator Console" in html
+    assert "World model" in html
+    assert "Contradictions" in html
+    assert "known facts" in html
+    assert "checkpointBanner" in html
 
     r = client.get("/health")
     assert r.json()["mode"] == "manual"
