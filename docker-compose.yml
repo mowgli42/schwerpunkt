@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: schwerpunkt
+      POSTGRES_PASSWORD: schwerpunkt
+      POSTGRES_DB: schwerpunkt
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U schwerpunkt -d schwerpunkt"]
+      interval: 3s
+      timeout: 5s
+      retries: 10

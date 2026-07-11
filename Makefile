@@ -7,7 +7,10 @@ demo:
 	./scripts/demo-manual.sh
 
 test:
-	pytest tests/ -q
+	pytest tests/ -q -m "not integration"
+
+test-integration:
+	pytest tests/integration/ -m integration
 
 spec:
 	npx @fission-ai/openspec validate --specs --strict

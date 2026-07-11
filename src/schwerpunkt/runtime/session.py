@@ -21,7 +21,7 @@ from schwerpunkt.models import (
 )
 from schwerpunkt.observe.fixtures import load_scenario_observation
 from schwerpunkt.orient.engine import orient_from_observation
-from schwerpunkt.store import InMemoryStore, SqliteStore, Store
+from schwerpunkt.store import InMemoryStore, PostgresStore, SqliteStore, Store
 
 
 @dataclass
@@ -53,7 +53,7 @@ def create_store(settings: Settings) -> Store:
         if settings.mode == RunMode.MANUAL or os.environ.get("SCHWERKPUNKT_USE_SQLITE") == "1":
             return SqliteStore(Path(settings.db_path))
         return InMemoryStore()
-    return SqliteStore(Path(settings.db_path))
+    return PostgresStore.from_url(settings.database_url)
 
 
 class SessionManager:

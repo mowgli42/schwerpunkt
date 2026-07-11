@@ -7,6 +7,10 @@ from typing import Protocol
 
 from schwerpunkt.models import AuditEvent, SessionState, WorldModel
 
+from schwerpunkt.store.postgres import PostgresStore
+
+__all__ = ["InMemoryStore", "PostgresStore", "SqliteStore", "Store"]
+
 
 class Store(Protocol):
     def save_session(self, session: SessionState) -> None: ...

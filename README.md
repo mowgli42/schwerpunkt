@@ -15,10 +15,10 @@ Runnable stub/manual modes, operator console, contradiction demo, and adversaria
 | Artifact | State |
 |----------|-------|
 | OpenSpec (6 capabilities) | Validated (`openspec validate --strict`) |
-| Implementation | Python OODA runtime + SQLite |
+| Implementation | Python OODA runtime + SQLite / PostgreSQL |
 | Demo | `contradiction_case` end-to-end (CLI + console) |
-| Tests | 23 passing (unit + Gherkin) |
-| Live LLM/MCP | Phase 1D backlog |
+| Tests | 23+ passing (unit + Gherkin; integration with Docker) |
+| Live LLM/MCP | Phase 2 backlog |
 
 ## Maturity matrix (L0 → L3)
 
@@ -55,7 +55,7 @@ Most agent frameworks use a **ReAct** loop: reason → act → observe tool resu
 |------|------------------------|------|-------------|
 | `stub` | Fixture JSON | Enabled | None — unit tests & CI |
 | `manual` | **Operator** via console/API/CLI | Disabled by default | None — live demos |
-| `live` | LLM API and/or MCP | TBD | Phase 1D |
+| `live` | LLM API and/or MCP | TBD | Phase 2 |
 
 ```bash
 SCHWERKPUNKT_MODE=manual SCHWERKPUNKT_PROFILE=local uvicorn schwerpunkt.api.app:app --reload
@@ -76,7 +76,12 @@ make demo          # headless contradiction_case demo (no AI)
 make test          # unit + Gherkin
 make spec          # OpenSpec strict validation
 
-# Browser operator console
+# Server profile (PostgreSQL)
+docker compose up -d postgres
+pip install -e ".[server,dev]"
+SCHWERKPUNKT_MODE=manual SCHWERKPUNKT_PROFILE=server uvicorn schwerpunkt.api.app:app
+
+# Browser operator console (local)
 SCHWERKPUNKT_MODE=manual uvicorn schwerpunkt.api.app:app --reload
 # → http://127.0.0.1:8000/console
 ```
@@ -131,10 +136,12 @@ npx @fission-ai/openspec validate --specs --strict
 | Act→Observe discrepancy feedback | Done |
 | Velocity guard (high_stakes) | Done |
 | Operator console (world model view) | Done |
-| Live LLM / MCP adapters | Phase 2 (`schwerpunkt-i0i.2.10`) |
+| Postgres server profile | Done (`PostgresStore`, `docker-compose.yml`) |
+| Live LLM / MCP adapters | Phase 2 (`schwerpunkt-i0i.2.10.1`, `.2`) |
+| MTO + impact integration | Phase 3 / [GitHub #2](https://github.com/mowgli42/schwerpunkt/issues/2) (`schwerpunkt-i0i.3.2`) |
+| LGTM observability | Phase 3 / [GitHub #3](https://github.com/mowgli42/schwerpunkt/issues/3) (`schwerpunkt-i0i.3.3`) |
 | LangGraph orchestration | Deferred (`schwerpunkt-i0i.2.10.4`) |
 | SSE escalations | Phase 2 (`schwerpunkt-i0i.2.10.5`) |
-| Postgres server profile | Phase 2 (`schwerpunkt-i0i.2.10.3`) |
 
 ## License
 

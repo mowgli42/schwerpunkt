@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     rules_path: str = "./fixtures/igc_rules.json"
     host: str = "127.0.0.1"
     port: int = 8000
+    database_url: str = "postgresql://schwerpunkt:schwerpunkt@127.0.0.1:5432/schwerpunkt"
 
     @property
     def db_path(self) -> str:

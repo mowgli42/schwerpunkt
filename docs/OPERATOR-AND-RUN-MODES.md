@@ -100,7 +100,7 @@ SCHWERKPUNKT_MODE=manual SCHWERKPUNKT_PROFILE=local uvicorn schwerpunkt.api:app
 
 | Component | Requirement |
 |-----------|-------------|
-| PostgreSQL | 16+ with pgvector (orientation memory) |
+| PostgreSQL | 16+ (`PostgresStore` implemented; pgvector orientation memory deferred) |
 | LLM API | Provider key via env (`OPENAI_API_KEY`, etc.) |
 | MCP (optional) | Separate MCP server or in-process bridge |
 | Network | Egress to LLM provider; ingress for operator API |
@@ -150,4 +150,4 @@ Neither is loaded when `SCHWERKPUNKT_MODE` is `stub` or `manual`.
 
 - OpenSpec: `openspec/specs/runtime-modes/spec.md`, `openspec/specs/operator-console/spec.md`
 - Architecture: [architecture.md](architecture.md)
-- Beads: Phase 1 closed (`schwerpunkt-i0i.2`); Phase 2 live path (`schwerpunkt-i0i.2.10`) — `bd list`
+- Beads: Phase 1 closed; Phase 2 live path (`schwerpunkt-i0i.2.10`); Phase 3 MTO/LGTM (`schwerpunkt-i0i.3`, gh-2/gh-3) — `bd list`
