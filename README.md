@@ -131,10 +131,10 @@ npx @fission-ai/openspec validate --specs --strict
 | Act→Observe discrepancy feedback | Done |
 | Velocity guard (high_stakes) | Done |
 | Operator console (world model view) | Done |
-| Live LLM / MCP adapters | Phase 1D |
-| LangGraph orchestration | Deferred |
-| SSE escalations | Spec only |
-| Postgres server profile | Phase 1D |
+| Live LLM / MCP adapters | Phase 2 (`schwerpunkt-i0i.2.10`) |
+| LangGraph orchestration | Deferred (`schwerpunkt-i0i.2.10.4`) |
+| SSE escalations | Phase 2 (`schwerpunkt-i0i.2.10.5`) |
+| Postgres server profile | Phase 2 (`schwerpunkt-i0i.2.10.3`) |
 
 ## License
 

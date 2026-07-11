@@ -150,4 +150,4 @@ Neither is loaded when `SCHWERKPUNKT_MODE` is `stub` or `manual`.
 
 - OpenSpec: `openspec/specs/runtime-modes/spec.md`, `openspec/specs/operator-console/spec.md`
 - Architecture: [architecture.md](architecture.md)
-- Beads Phase 1 sub-epics: `bd list` under `Phase 1`
+- Beads: Phase 1 closed (`schwerpunkt-i0i.2`); Phase 2 live path (`schwerpunkt-i0i.2.10`) — `bd list`

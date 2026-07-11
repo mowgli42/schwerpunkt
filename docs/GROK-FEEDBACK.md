@@ -111,7 +111,7 @@ Add `implementation_status` per requirement: `specified | implemented | verified
 - [x] Act→Observe discrepancy population
 - [x] Fix manual Decide to honor operator candidate choice
 - [x] Add `features/human-in-the-loop.feature` + unit tests
-- [ ] Reopen Beads tasks for SSE, velocity guard full spec, LangGraph
+- [ ] Reopen Beads tasks for SSE, velocity guard full spec, LangGraph → **done:** Phase 2 epic split; SSE `2.10.5`, LangGraph deferred `2.10.4`
 - [x] Add maturity matrix (L0–L3) to README
 - [x] Operator console (world model + contradiction view)
 

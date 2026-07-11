@@ -282,7 +282,9 @@ Orientation must be **structured, queryable, and durable** — not only embedded
 - LangGraph-free OODA loop runner first (LangGraph optional in server profile)
 - pytest-bdd in stub mode only for CI
 
-**Out of scope (Phase 1D / later):**
+**Out of scope (Phase 2 / later):**
+
+Phase 2 epic: `schwerpunkt-i0i.2.10` (split from closed Phase 1).
 
 - LiveCognition LLM API adapter (`live` mode)
 - MCP bridge (`live` mode only)
