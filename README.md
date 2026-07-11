@@ -89,7 +89,7 @@ SCHWERKPUNKT_MODE=manual uvicorn schwerpunkt.api.app:app --reload
 4. **Resolve / Decide / Approve** — operator actions per pending checkpoint
 5. **Audit trail** — intent/outcome events for the session
 
-See [docs/DEMO-WALKTHROUGH.md](docs/DEMO-WALKTHROUGH.md) for step-by-step instructions.
+See [docs/DEMO-WALKTHROUGH.md](docs/DEMO-WALKTHROUGH.md) for step-by-step instructions and **screenshot walkthrough**.
 
 ## Documentation
 

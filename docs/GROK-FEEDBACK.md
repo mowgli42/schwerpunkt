@@ -119,8 +119,7 @@ Add `implementation_status` per requirement: `specified | implemented | verified
 
 ## Suggested follow-on issues
 
-1. Refine operator console with world model + contradiction view
-2. Postgres profile for manual/live (Docker compose)
-3. MTO Decision Tree as first real sensor use case
-4. Live LLM/MCP adapters (Phase 1D) with provider abstraction
-5. LangGraph orchestration or revise TECHNOLOGY-SELECTION to "deferred"
+1. Postgres profile for manual/live (Docker compose)
+2. MTO Decision Tree as first real sensor use case
+3. Live LLM/MCP adapters (Phase 1D) with provider abstraction
+4. LangGraph orchestration or revise TECHNOLOGY-SELECTION to "deferred"
