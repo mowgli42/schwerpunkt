@@ -111,13 +111,3 @@ class ManualCognition:
 
     async def decide(self, session: SessionState, orientation: OrientationResult) -> Decision:
         return Decision(escalate=Escalation(reason="manual_decide_pending"))
-
-
-class LiveCognition:
-    async def orient(
-        self, session: SessionState, observation: Observation, world_model: WorldModel
-    ) -> OrientationResult:
-        raise NotImplementedError("LiveCognition requires LLM/MCP adapter (Phase 1D)")
-
-    async def decide(self, session: SessionState, orientation: OrientationResult) -> Decision:
-        raise NotImplementedError("LiveCognition requires LLM/MCP adapter (Phase 1D)")

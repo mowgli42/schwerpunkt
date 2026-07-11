@@ -64,6 +64,15 @@ SCHWERKPUNKT_MODE=manual SCHWERKPUNKT_PROFILE=local uvicorn schwerpunkt.api.app:
 
 Set `SCHWERKPUNKT_IGC_MANUAL=1` to enable IG&C fast-path in manual mode (opt-in for demos).
 
+**Live mode** (requires `pip install -e ".[server]"` for Postgres server profile):
+
+```bash
+export SCHWERKPUNKT_MODE=live
+export SCHWERKPUNKT_LLM_MOCK=1          # tests/demos without API key
+# export SCHWERKPUNKT_LLM_API_KEY=...  # real provider
+# export SCHWERKPUNKT_LLM_API_BASE=https://api.openai.com/v1
+```
+
 See [docs/OPERATOR-AND-RUN-MODES.md](docs/OPERATOR-AND-RUN-MODES.md) for interaction surfaces and local system demands.
 
 ## Quick start
@@ -137,7 +146,7 @@ npx @fission-ai/openspec validate --specs --strict
 | Velocity guard (high_stakes) | Done |
 | Operator console (world model view) | Done |
 | Postgres server profile | Done (`PostgresStore`, `docker-compose.yml`) |
-| Live LLM / MCP adapters | Phase 2 (`schwerpunkt-i0i.2.10.1`, `.2`) |
+| Live LLM / MCP adapters | Phase 2 — LiveCognition done (`SCHWERKPUNKT_LLM_MOCK=1` for tests) |
 | MTO + impact integration | Phase 3 / [GitHub #2](https://github.com/mowgli42/schwerpunkt/issues/2) (`schwerpunkt-i0i.3.2`) |
 | LGTM observability | Phase 3 / [GitHub #3](https://github.com/mowgli42/schwerpunkt/issues/3) (`schwerpunkt-i0i.3.3`) |
 | LangGraph orchestration | Deferred (`schwerpunkt-i0i.2.10.4`) |

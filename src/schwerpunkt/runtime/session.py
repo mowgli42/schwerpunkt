@@ -37,9 +37,9 @@ def create_cognition(settings: Settings) -> CognitionPort:
         return StubCognition(fixtures)
     if settings.mode == RunMode.MANUAL:
         return ManualCognition()
-    from schwerpunkt.cognition import LiveCognition
+    from schwerpunkt.cognition.live import create_live_cognition
 
-    return LiveCognition()
+    return create_live_cognition(settings)
 
 
 def create_store(settings: Settings) -> Store:

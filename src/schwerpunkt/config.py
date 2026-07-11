@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = 8000
     database_url: str = "postgresql://schwerpunkt:schwerpunkt@127.0.0.1:5432/schwerpunkt"
+    llm_api_base: str = "https://api.openai.com/v1"
+    llm_api_key: str = ""
+    llm_model: str = "gpt-4o-mini"
 
     @property
     def db_path(self) -> str:
