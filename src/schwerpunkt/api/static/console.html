@@ -299,6 +299,8 @@
   </div>
 
   <script>
+    let eventSource = null;
+
     const api = (path, opts = {}) =>
       fetch(path, { headers: { 'Content-Type': 'application/json' }, ...opts }).then(async r => {
         if (!r.ok) throw new Error(await r.text());
@@ -363,6 +365,36 @@
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    function applyEscalationPayload(data) {
+      if (!data) return;
+      const pending = data.pending_operator;
+      const escalation = data.escalation || null;
+      showCheckpoint(pending, escalation);
+      if (data.correlation_id) {
+        document.getElementById('checkpointDetail').dataset.correlationId = data.correlation_id;
+      }
+    }
+
+    function subscribeToEvents(id) {
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+      if (!id) return;
+      eventSource = new EventSource(`/sessions/${id}/events`);
+      eventSource.onmessage = (ev) => {
+        try {
+          applyEscalationPayload(JSON.parse(ev.data));
+        } catch (_) { /* ignore malformed */ }
+      };
+      eventSource.onerror = () => {
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+        }
+      };
+    }
+
     function showCheckpoint(pending, escalation) {
       const banner = document.getElementById('checkpointBanner');
       const title = document.getElementById('checkpointTitle');
@@ -389,6 +421,7 @@
     async function refresh() {
       const id = sid();
       if (!id) return;
+      subscribeToEvents(id);
       const s = await api(`/sessions/${id}`);
       const wm = s.world_model || {};
       const phase = s.phase || '—';

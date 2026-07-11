@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     llm_api_base: str = "https://api.openai.com/v1"
     llm_api_key: str = ""
     llm_model: str = "gpt-4o-mini"
+    mcp_enabled: bool = False
+    mcp_server_url: str = ""
+    mcp_api_key: str = ""
 
     @property
     def db_path(self) -> str:

@@ -165,3 +165,41 @@ def velocity_pause():
     s = _ctx["session"]
     assert s.phase == Phase.PAUSED
     assert s.pending_operator and s.pending_operator.kind == "velocity_checkpoint"
+
+
+@given("a manual session with contradiction pending operator review")
+def manual_contradiction_session(stub_settings):
+    from fastapi.testclient import TestClient
+
+    from schwerpunkt.api.app import create_app
+    from schwerpunkt.config import RunMode
+
+    settings = stub_settings.model_copy(update={"mode": RunMode.MANUAL})
+    client = TestClient(create_app(settings))
+    r = client.post("/sessions", json={"objective": "demo", "scenario": "contradiction_case"})
+    sid = r.json()["session_id"]
+    client.post(f"/sessions/{sid}/observe/fixture", json={"scenario": "contradiction_case"})
+    client.post(f"/sessions/{sid}/advance")
+    _ctx["client"] = client
+    _ctx["session_id"] = sid
+
+
+@when("the operator opens the SSE events stream")
+def open_sse_stream():
+    import json
+
+    client = _ctx["client"]
+    sid = _ctx["session_id"]
+    resp = client.get(f"/sessions/{sid}/events", params={"snapshot_only": True})
+    for line in resp.text.splitlines():
+        if line.startswith("data: "):
+            _ctx["sse_payload"] = json.loads(line[6:])
+            return
+    raise AssertionError("no SSE payload")
+
+
+@then("the stream includes correlation_id and pending_operator kind orient")
+def sse_orient_payload():
+    payload = _ctx["sse_payload"]
+    assert payload["correlation_id"]
+    assert payload["pending_operator"]["kind"] == "orient"

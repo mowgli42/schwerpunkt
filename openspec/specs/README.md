@@ -20,7 +20,7 @@ Capabilities map to Boyd OODA phases and cross-cutting concerns.
 | act-audit | Act | backlog |
 | implicit-guidance | IG&C fast path | backlog |
 | live-cognition-adapter | Orient / Decide (live only) | backlog |
-| mcp-bridge | Live tool calls | backlog |
+| mcp-bridge | Live tool calls | [mcp-bridge/spec.md](mcp-bridge/spec.md) |
 
 ## Implementation status model
 

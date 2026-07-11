@@ -1,0 +1,16 @@
+---
+description: Finish one Beads phase completely before starting the next
+alwaysApply: true
+---
+
+# Phase completion discipline
+
+When working a Beads epic (e.g. Phase 2 `schwerpunkt-i0i.2.10`):
+
+1. **Stay in phase** — Do not implement, suggest, or create tickets for the next phase until every non-deferred child bead in the current epic is closed.
+2. **Definition of done per bead** — Working code in `src/`, tests proving behavior (unit and/or Gherkin), OpenSpec scenario updated with `implementation_status: verified` where applicable, bead closed with `bd close`.
+3. **No spec-only drops** — If OpenSpec says SSE/MCP/live, implement and test it or explicitly defer the bead with `bd update -s deferred` and amend the spec in the same PR.
+4. **Close the epic** — When all children are closed/deferred, `bd close` the parent epic and push to `main`.
+5. **Report** — End with: beads closed, tests run, spec validation, what remains deferred and why.
+
+Do not offer Phase 3 work while Phase 2 beads are open.

@@ -24,3 +24,8 @@ Feature: Human-in-the-loop governance
     Given a high stakes session at loop count 10
     When Orient completes with sufficient confidence
     Then a velocity checkpoint pause is pending
+
+  Scenario: SSE escalation stream includes correlation id
+    Given a manual session with contradiction pending operator review
+    When the operator opens the SSE events stream
+    Then the stream includes correlation_id and pending_operator kind orient

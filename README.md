@@ -8,17 +8,17 @@
 
 ## Status
 
-**Phase 1 vertical slice — L1 Implemented, moving toward L2 Verified.**
+**Phase 2 complete — Live cognition, Postgres server profile, SSE, MCP (optional).**
 
-Runnable stub/manual modes, operator console, contradiction demo, and adversarial Gherkin coverage. Not yet a Boyd OODA reference implementation — see maturity matrix below.
+Runnable stub/manual/live modes, operator console with SSE checkpoints, contradiction demo, and adversarial Gherkin coverage. LangGraph deferred. Phase 3 (MTO/LGTM) not started.
 
 | Artifact | State |
 |----------|-------|
-| OpenSpec (6 capabilities) | Validated (`openspec validate --strict`) |
-| Implementation | Python OODA runtime + SQLite / PostgreSQL |
+| OpenSpec (7 capabilities) | Validated (`openspec validate --strict`) |
+| Implementation | Python OODA runtime + SQLite / PostgreSQL + SSE + MCP mock |
 | Demo | `contradiction_case` end-to-end (CLI + console) |
-| Tests | 23+ passing (unit + Gherkin; integration with Docker) |
-| Live LLM/MCP | Phase 2 backlog |
+| Tests | 30+ passing (unit + Gherkin; integration with Docker) |
+| Live LLM/MCP | LiveCognition + optional MCP bridge (`SCHWERKPUNKT_LLM_MOCK=1`, `SCHWERKPUNKT_MCP_MOCK=1`) |
 
 ## Maturity matrix (L0 → L3)
 
@@ -27,7 +27,7 @@ Runnable stub/manual modes, operator console, contradiction demo, and adversaria
 | **L0** | Specified | OpenSpec + Beads define full Boyd platform |
 | **L1** | Implemented | Stub/manual runtime, IG&C rules, operator surfaces |
 | **L2** | Verified | Partial — `human-in-the-loop.feature`, contradiction demo |
-| **L3** | Production | Not started — auth, WORM audit, LangGraph, SSE |
+| **L3** | Production | Not started — auth, WORM audit, LangGraph |
 
 **Honest scope:** The living specs describe a production-grade platform. The code is a **credible demo scaffold** with good bones. See [docs/GROK-FEEDBACK.md](docs/GROK-FEEDBACK.md) for adversarial review and prioritized gaps.
 
@@ -55,7 +55,7 @@ Most agent frameworks use a **ReAct** loop: reason → act → observe tool resu
 |------|------------------------|------|-------------|
 | `stub` | Fixture JSON | Enabled | None — unit tests & CI |
 | `manual` | **Operator** via console/API/CLI | Disabled by default | None — live demos |
-| `live` | LLM API and/or MCP | TBD | Phase 2 |
+| `live` | LLM API and/or MCP | TBD | `SCHWERKPUNKT_LLM_MOCK=1`, `SCHWERKPUNKT_MCP_MOCK=1` for tests |
 
 ```bash
 SCHWERKPUNKT_MODE=manual SCHWERKPUNKT_PROFILE=local uvicorn schwerpunkt.api.app:app --reload
@@ -69,8 +69,10 @@ Set `SCHWERKPUNKT_IGC_MANUAL=1` to enable IG&C fast-path in manual mode (opt-in 
 ```bash
 export SCHWERKPUNKT_MODE=live
 export SCHWERKPUNKT_LLM_MOCK=1          # tests/demos without API key
+export SCHWERKPUNKT_MCP_MOCK=1          # MCP observe without MCP server
+export SCHWERKPUNKT_MCP_ENABLED=1       # opt-in MCP bridge
 # export SCHWERKPUNKT_LLM_API_KEY=...  # real provider
-# export SCHWERKPUNKT_LLM_API_BASE=https://api.openai.com/v1
+# export SCHWERKPUNKT_MCP_SERVER_URL=...  # real MCP HTTP endpoint
 ```
 
 See [docs/OPERATOR-AND-RUN-MODES.md](docs/OPERATOR-AND-RUN-MODES.md) for interaction surfaces and local system demands.
@@ -146,11 +148,11 @@ npx @fission-ai/openspec validate --specs --strict
 | Velocity guard (high_stakes) | Done |
 | Operator console (world model view) | Done |
 | Postgres server profile | Done (`PostgresStore`, `docker-compose.yml`) |
-| Live LLM / MCP adapters | Phase 2 — LiveCognition done (`SCHWERKPUNKT_LLM_MOCK=1` for tests) |
+| Live LLM / MCP adapters | Done — LiveCognition + optional MCP (`SCHWERKPUNKT_MCP_ENABLED=1`, mock env vars for CI) |
 | MTO + impact integration | Phase 3 / [GitHub #2](https://github.com/mowgli42/schwerpunkt/issues/2) (`schwerpunkt-i0i.3.2`) |
 | LGTM observability | Phase 3 / [GitHub #3](https://github.com/mowgli42/schwerpunkt/issues/3) (`schwerpunkt-i0i.3.3`) |
 | LangGraph orchestration | Deferred (`schwerpunkt-i0i.2.10.4`) |
-| SSE escalations | Phase 2 (`schwerpunkt-i0i.2.10.5`) |
+| SSE escalations | Done (`GET /sessions/{id}/events`, console EventSource) |
 
 ## License
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from schwerpunkt.act.executor import decide_with_risk, execute_action
 from schwerpunkt.cognition import CognitionPort, ManualCognition, StubCognition
@@ -63,6 +64,15 @@ class SessionManager:
         self.cognition = create_cognition(self.settings)
         self.igc = IGCEngine(Path(self.settings.rules_path))
         self.manual: dict[str, ManualPending] = {}
+        self.mcp_bridge = self._create_mcp_bridge()
+        self._correlation_ids: dict[str, str] = {}
+
+    def _create_mcp_bridge(self) -> Any | None:
+        if self.settings.mode != RunMode.LIVE:
+            return None
+        from schwerpunkt.mcp.bridge import create_mcp_bridge
+
+        return create_mcp_bridge(self.settings)
 
     def create_session(
         self,
@@ -92,6 +102,56 @@ class SessionManager:
         self.store.save_session(session)
         for ev in session.audit[-3:]:
             self.store.append_audit(ev)
+
+    def build_escalation_payload(self, session_id: str) -> dict[str, Any] | None:
+        session = self.get(session_id)
+        if not session:
+            return None
+        if not session.pending_operator and not session.last_escalation:
+            return None
+        correlation_id = self._correlation_ids.get(session_id)
+        if not correlation_id:
+            correlation_id = str(uuid.uuid4())[:12]
+            self._correlation_ids[session_id] = correlation_id
+        payload: dict[str, Any] = {
+            "correlation_id": correlation_id,
+            "session_id": session_id,
+            "phase": session.phase.value,
+            "world_model": session.world_model.model_dump(mode="json"),
+        }
+        if session.pending_operator:
+            payload["pending_operator"] = session.pending_operator.model_dump(mode="json")
+        if session.last_escalation:
+            payload["escalation"] = session.last_escalation.model_dump(mode="json")
+        return payload
+
+    def _publish_operator_event(self, session: SessionState) -> None:
+        if not session.pending_operator and not session.last_escalation:
+            return
+        from schwerpunkt.api.events import get_escalation_bus
+
+        payload = self.build_escalation_payload(session.id)
+        if payload:
+            get_escalation_bus().publish(session.id, payload)
+
+    async def load_observation_from_mcp(
+        self,
+        session_id: str,
+        tool: str = "fetch_sensor",
+        arguments: dict[str, Any] | None = None,
+    ) -> SessionState:
+        if not self.mcp_bridge:
+            raise RuntimeError("MCP bridge is not enabled (live mode + mcp_enabled required)")
+        from schwerpunkt.mcp.bridge import observation_from_mcp_result
+
+        session = self._require(session_id)
+        result = await self.mcp_bridge.call_tool(tool, arguments or {})
+        observation = observation_from_mcp_result(result)
+        session.observation = observation
+        session.phase = Phase.OBSERVE
+        session.log("observe_mcp", {"tool": tool, "arguments": arguments or {}})
+        self._persist(session)
+        return session
 
     def load_observation(self, session_id: str, scenario: str | None = None) -> SessionState:
         session = self._require(session_id)
@@ -132,6 +192,7 @@ class SessionManager:
 
         session.world_model = apply_human_resolutions(wm)
         session.pending_operator = None
+        self._correlation_ids.pop(session_id, None)
         session.log("human_resolution", resolved.model_dump(), actor=actor)
         if session.observation:
             session.orientation = orient_from_observation(session.observation, session.world_model)
@@ -144,6 +205,7 @@ class SessionManager:
         session = self._require(session_id)
         session.operator_decide_id = candidate_id
         session.pending_operator = None
+        self._correlation_ids.pop(session_id, None)
         session.phase = Phase.DECIDE
         session.log("operator_decide", {"candidate_id": candidate_id}, actor=actor)
         self._persist(session)
@@ -157,6 +219,7 @@ class SessionManager:
         self.store.save_approval_token(session_id, action_hash, token)
         session.operator_approval_token = token
         session.pending_operator = None
+        self._correlation_ids.pop(session_id, None)
         session.log("approval_token", {"action_hash": action_hash}, actor=actor)
         self._persist(session)
         return token
@@ -166,6 +229,7 @@ class SessionManager:
         if not session.pending_operator or session.pending_operator.kind != "velocity_checkpoint":
             return session
         session.pending_operator = None
+        self._correlation_ids.pop(session_id, None)
         session.phase = Phase.DECIDE
         session.log("velocity_checkpoint_ack", {"loop_count": session.world_model.loop_count}, actor=actor)
         self._persist(session)
@@ -191,6 +255,7 @@ class SessionManager:
             )
             session.phase = Phase.ESCALATED
             session.log("escalation", session.last_escalation.model_dump())
+            self._publish_operator_event(session)
             self._persist(session)
             return session
 
@@ -201,11 +266,13 @@ class SessionManager:
             session.world_model = orientation.updated_model
             if orientation.requires_human_review and self.settings.mode == RunMode.MANUAL:
                 session.phase = Phase.PAUSED
+                self._publish_operator_event(session)
                 self._persist(session)
                 return session
             if orientation.orientation_confidence < 0.3:
                 session.last_escalation = Escalation(reason="insufficient_orientation_confidence")
                 session.phase = Phase.ESCALATED
+                self._publish_operator_event(session)
                 self._persist(session)
                 return session
 
@@ -242,6 +309,7 @@ class SessionManager:
                     payload={"loop_count": session.world_model.loop_count},
                 )
                 session.phase = Phase.PAUSED
+                self._publish_operator_event(session)
                 self._persist(session)
                 return session
 
@@ -258,10 +326,12 @@ class SessionManager:
             if decision.escalate:
                 session.last_escalation = decision.escalate
                 session.phase = Phase.ESCALATED
+                self._publish_operator_event(session)
                 self._persist(session)
                 return session
             if session.pending_operator and self.settings.mode == RunMode.MANUAL:
                 session.phase = Phase.PAUSED
+                self._publish_operator_event(session)
                 self._persist(session)
                 return session
             session.phase = Phase.ACT
@@ -313,6 +383,7 @@ class SessionManager:
                     kind="orient",
                     payload={"contradictions": [c.model_dump() for c in result.contradictions]},
                 )
+                self._publish_operator_event(session)
             return result
         return await self.cognition.orient(session, obs, session.world_model)
 
@@ -353,6 +424,7 @@ class SessionManager:
                     kind="decide",
                     payload={"candidates": [c.model_dump() for c in candidates]},
                 )
+                self._publish_operator_event(session)
                 return Decision(alternatives_considered=candidates)
             chosen = next(c for c in candidates if c.id == session.operator_decide_id)
             token = session.operator_approval_token
@@ -363,6 +435,7 @@ class SessionManager:
                     kind="approve",
                     payload={"action_hash": chosen.action_hash, "candidate_id": chosen.id},
                 )
+                self._publish_operator_event(session)
                 return Decision(alternatives_considered=candidates)
             session.operator_decide_id = None
             return decide_with_risk(orientation, candidates, token, chosen=chosen)

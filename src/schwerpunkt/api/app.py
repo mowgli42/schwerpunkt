@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse
-from pydantic import BaseModel
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+from pydantic import BaseModel, Field
 
+from schwerpunkt.api.events import get_escalation_bus, reset_escalation_bus
 from schwerpunkt.models import Observation, Phase
 from schwerpunkt.runtime.session import get_manager, reset_manager
 from schwerpunkt.config import Settings, get_settings
@@ -38,9 +41,15 @@ class LoadFixtureBody(BaseModel):
     scenario: str | None = None
 
 
+class McpObserveBody(BaseModel):
+    tool: str = "fetch_sensor"
+    arguments: dict[str, Any] = Field(default_factory=dict)
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     if settings:
         reset_manager(settings)
+    reset_escalation_bus()
     app = FastAPI(title="Schwerpunkt Operator API", version="0.1.0")
     mgr = get_manager()
     static_dir = Path(__file__).resolve().parent / "static"
@@ -69,6 +78,38 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except KeyError:
             raise HTTPException(404, "session not found")
         return {"phase": session.phase.value, "observation": session.observation.model_dump() if session.observation else None}
+
+    @app.post("/sessions/{session_id}/observe/mcp")
+    async def load_mcp_observation(session_id: str, body: McpObserveBody) -> dict:
+        try:
+            session = await mgr.load_observation_from_mcp(session_id, body.tool, body.arguments)
+        except KeyError:
+            raise HTTPException(404, "session not found")
+        except RuntimeError as exc:
+            raise HTTPException(400, str(exc))
+        return {"phase": session.phase.value, "observation": session.observation.model_dump() if session.observation else None}
+
+    @app.get("/sessions/{session_id}/events")
+    async def session_events(session_id: str, snapshot_only: bool = False) -> StreamingResponse:
+        session = mgr.get(session_id)
+        if not session:
+            raise HTTPException(404, "session not found")
+        bus = get_escalation_bus()
+
+        async def event_generator():
+            snapshot = mgr.build_escalation_payload(session_id)
+            if snapshot:
+                yield f"data: {json.dumps(snapshot)}\n\n"
+            if snapshot_only:
+                return
+            async for payload in bus.stream(session_id):
+                yield f"data: {json.dumps(payload)}\n\n"
+
+        return StreamingResponse(
+            event_generator(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
+        )
 
     @app.post("/sessions/{session_id}/step")
     async def run_step(session_id: str) -> dict:

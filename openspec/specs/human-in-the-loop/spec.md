@@ -75,3 +75,14 @@ High-stakes sessions SHALL force sensemaking checkpoints to prevent outrunning h
 - **AND** all confidence thresholds are met
 - **WHEN** the runtime completes Orient
 - **THEN** the runtime SHALL pause for sensemaking checkpoint before Decide
+
+### Requirement: SSE escalation stream
+
+The Operator API SHALL expose a Server-Sent Events channel for operator escalations and checkpoints.
+
+#### Scenario: SSE delivers escalation with correlation id
+
+- **GIVEN** a session with `pending_operator` or `last_escalation` set
+- **WHEN** operator opens `GET /sessions/{id}/events`
+- **THEN** the stream SHALL emit an event with `correlation_id`, `session_id`, and world model snapshot
+- **AND** `pending_operator` or `escalation` payload SHALL be included when present

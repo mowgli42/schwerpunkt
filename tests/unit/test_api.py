@@ -37,6 +37,7 @@ def test_api_manual_flow(stub_settings):
     assert "Contradictions" in html
     assert "known facts" in html
     assert "checkpointBanner" in html
+    assert "EventSource" in html
 
     r = client.get("/health")
     assert r.json()["mode"] == "manual"
