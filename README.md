@@ -6,6 +6,105 @@
 
 **Source concept:** [Boyd OODA Loop Agility AI Insights (Grok)](https://grok.com/share/c2hhcmQtMg_431da025-0818-430c-90ee-b21f66bd5a56)
 
+## Operator console
+
+Manual-mode console for the contradiction demo — no API keys required.
+
+![Console initial state](docs/screenshots/01-console-initial.png)
+
+![Contradiction checkpoint](docs/screenshots/03-contradiction-checkpoint.png)
+
+Full walkthrough with every step: [docs/DEMO-WALKTHROUGH.md](docs/DEMO-WALKTHROUGH.md).
+
+## Architecture
+
+```mermaid
+flowchart TB
+  subgraph Clients["Clients"]
+    Console["Operator Console\n(manual demo)"]
+    CLI["CLI\n(manual / stub)"]
+    API["Operator API\nREST + SSE"]
+    MCP["MCP bridge\n(live only)"]
+  end
+
+  subgraph Runtime["OODA Runtime"]
+    OBS["Observe\nparallel sensors"]
+    ORI["Orient"]
+    DEC["Decide"]
+    ACT["Act\nexecute + verify"]
+    OBS --> ORI --> DEC --> ACT
+    ACT -.->|feedback| OBS
+    ORI -.->|IG&C bypass| ACT
+  end
+
+  subgraph Cognition["CognitionPort (injected)"]
+    STUB["StubCognition\ntests"]
+    MAN["ManualCognition\ndemo"]
+    LIVE["LiveCognition\nAPI / MCP"]
+  end
+
+  subgraph Schwerpunkt["Orientation Layer (persistent)"]
+    WM["WorldModel\nfacts · contradictions · risk"]
+  end
+
+  subgraph Data["Store (profile-dependent)"]
+    SQL[(SQLite local)]
+    PG[(PostgreSQL server)]
+  end
+
+  Console --> API
+  CLI --> API
+  MCP -.->|live only| LIVE
+  API --> Runtime
+  ORI --> STUB & MAN & LIVE
+  DEC --> STUB & MAN & LIVE
+  ORI <--> WM
+  WM --> SQL & PG
+  ACT --> SQL & PG
+```
+
+## Loop sequence (Observe → Act)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant S as Sensors
+  participant O as Observe
+  participant R as Orient
+  participant D as Decide
+  participant H as Human
+  participant A as Act
+  participant DB as Postgres
+
+  par Parallel observe
+    S->>O: sensor reads
+  end
+  O->>R: Observation + confidence
+  R->>DB: load world model
+  R->>R: detect contradictions
+  alt contradictions high severity
+    R->>H: escalation (SSE)
+    H->>R: human_resolved_facts
+  end
+  R->>D: OrientationResult
+  alt IG&C eligible
+    D->>A: direct action
+  else full decide
+    D->>D: candidates + risk gate
+    alt irreversible w/o token
+      D->>H: approval request
+      H->>D: approval_token
+    end
+    D->>A: Decision
+  end
+  A->>DB: audit intent
+  A->>A: execute + verify
+  A->>DB: audit outcome
+  A->>O: discrepancies as new signals
+```
+
+Details and domain objects: [docs/architecture.md](docs/architecture.md).
+
 ## Status
 
 **Phase 2 complete — Live cognition, Postgres server profile, SSE, MCP (optional).**
