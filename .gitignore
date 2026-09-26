@@ -18,3 +18,7 @@ data/
 # OS
 .DS_Store
 .gstack/
+
+# Secrets (never commit private keys)
+*-key.pem
+*.key

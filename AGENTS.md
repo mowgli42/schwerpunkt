@@ -94,3 +94,7 @@ bd close <id>         # Complete work
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
 <!-- END BEADS INTEGRATION -->
+
+## Secrets
+
+Do not commit private keys, *-key.pem, *.key, .env secrets, or BEGIN … PRIVATE KEY. Generate locally; gitignore keys.
