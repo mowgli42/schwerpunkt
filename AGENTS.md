@@ -1,100 +1,61 @@
-# Agent Instructions
+# schwerpunkt
 
-This project uses **bd** (beads) for issue tracking. Run `bd prime` for full workflow context.
+Orientation-first Boyd OODA loop runtime for AI agents: persistent WorldModel, contradiction detection, IG&C, operator console.
+Stack: Python 3.12+ / FastAPI / SQLite (local) or PostgreSQL (server) / optional MCP + LLM.
+Posture: ponytail (repo created 2026-07-10, >30 days).
+Shared health pack lives in `.cursor/skills/` and `.cursor/rules/` — follow those for [Health] work.
 
-> **Architecture in one line:** Issues live in a local Dolt database
-> (`.beads/dolt/`); cross-machine sync uses `bd dolt push/pull` (a
-> git-compatible protocol), stored under `refs/dolt/data` on your git
-> remote — separate from `refs/heads/*` where your code lives.
-> `.beads/issues.jsonl` is a passive export, not the wire protocol.
->
-> See [SYNC_CONCEPTS.md](https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md)
-> for the one-screen overview and anti-patterns (don't treat JSONL as the
-> source of truth; don't `bd import` during normal operation; don't
-> reach for third-party Dolt hosting before trying the default).
+## Commands
 
-## Quick Reference
+- Install: `python -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"`
+- Demo (headless): `make demo`
+- Test (unit + Gherkin, no Docker): `make test` or `pytest tests/ -q -m "not integration"`
+- Spec: `make spec` or `npx @fission-ai/openspec validate --specs --strict`
+- Console: `SCHWERKPUNKT_MODE=manual SCHWERKPUNKT_PROFILE=local uvicorn schwerpunkt.api.app:app --reload` → http://127.0.0.1:8000/console
+- Server profile: `docker compose up -d postgres && SCHWERKPUNKT_MODE=manual SCHWERKPUNKT_PROFILE=server uvicorn schwerpunkt.api.app:app`
+- Secrets: `bash scripts/scan-secrets.sh .`
+- Beads: `bd ready`
 
-```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --claim  # Claim work atomically
-bd close <id>         # Complete work
-bd dolt push          # Push beads data to remote
-```
+## Hard prohibitions
 
-## Non-Interactive Shell Commands
+- Do not commit private keys, `*-key.pem`, `*.key`, `.env` secrets, or `BEGIN … PRIVATE KEY` blobs. Generate credentials locally; gitignore them. Public certs may stay.
+- Do not invent CLI flags, env vars (`SCHWERKPUNKT_*`), API routes, or OpenSpec capabilities that are not already in this tree. Read `src/`, `openspec/`, and `docs/OPERATOR-AND-RUN-MODES.md` first.
+- Do not rewrite OpenSpec or Gherkin to match a hoped-for Phase 3 (MTO/LGTM). Update them only when code already changed.
+- Do not treat `.beads/issues.jsonl` as the source of truth. Use `bd` commands; the JSONL is a passive export.
 
-**ALWAYS use non-interactive flags** with file operations to avoid hanging on confirmation prompts.
+## Verify by change type
 
-Shell commands like `cp`, `mv`, and `rm` may be aliased to include `-i` (interactive) mode on some systems, causing the agent to hang indefinitely waiting for y/n input.
+| Change | Check |
+| --- | --- |
+| Runtime / Orient / WorldModel | `make test` + relevant unit or Gherkin |
+| Operator API / console | `make test` + load http://127.0.0.1:8000/console and run contradiction_case |
+| Spec | matching `.feature` + `make spec` still passes |
+| Secrets / TLS | `bash scripts/scan-secrets.sh .` passes |
+| Beads | `bd ready` shows expected next item |
 
-**Use these forms instead:**
-```bash
-# Force overwrite without prompting
-cp -f source dest           # NOT: cp source dest
-mv -f source dest           # NOT: mv source dest
-rm -f file                  # NOT: rm file
+## Source of truth
 
-# For recursive operations
-rm -rf directory            # NOT: rm -r directory
-cp -rf source dest          # NOT: cp -r source dest
-```
+- Behavior: `openspec/specs/` + `features/*.feature`
+- Remaining work: Beads (`bd ready`) + GitHub issues #2 (MTO) and #3 (LGTM)
+- Demo evidence: `docs/screenshots/` + `docs/DEMO-WALKTHROUGH.md`
+- Architecture: `docs/architecture.md` + README mermaid diagrams
+- Health bar: do not duplicate `SUCCESS_CRITERIA.md` here
 
-**Other commands that may prompt:**
-- `scp` - use `-o BatchMode=yes` for non-interactive
-- `ssh` - use `-o BatchMode=yes` to fail instead of prompting
-- `apt-get` - use `-y` flag
-- `brew` - use `HOMEBREW_NO_AUTO_UPDATE=1` env var
+## House vocabulary
 
-<!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:7510c1e2 -->
-## Beads Issue Tracker
+- Schwerpunkt — Orientation (persistent WorldModel), the center of gravity of the OODA loop. Do not write "context window" or "memory".
+- IG&C — Implicit Guidance & Control; trained patterns that can bypass explicit Decide. Do not write "fast path" without naming IG&C.
+- WorldModel — structured facts · contradictions · risk budget. Do not write "state" or "context".
+- Manual mode — operator supplies Orient/Decide via console; no external AI. Do not invent a fourth mode.
 
-This project uses **bd (beads)** for issue tracking. Run `bd prime` to see full workflow context and commands.
+## Good / bad (from this repo)
 
-### Quick Reference
+Bad: inventing a new `SCHWERKPUNKT_FOO` env var or FastAPI route that is not in `src/schwerpunkt/`.
+Good: extending an existing cognition port (`StubCognition`, `ManualCognition`, `LiveCognition`) or store (`SQLite` / `PostgresStore`).
 
-```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --claim  # Claim work
-bd close <id>         # Complete work
-```
+## Borrowed patterns
 
-### Rules
-
-- Use `bd` for ALL task tracking — do NOT use TodoWrite, TaskCreate, or markdown TODO lists
-- Run `bd prime` for detailed command reference and session close protocol
-- Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
-
-**Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md for details and anti-patterns.
-
-## Session Completion
-
-**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
-
-**MANDATORY WORKFLOW:**
-
-1. **File issues for remaining work** - Create issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
-   ```bash
-   git pull --rebase
-   git push
-   git status  # MUST show "up to date with origin"
-   ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
-
-**CRITICAL RULES:**
-- Work is NOT complete until `git push` succeeds
-- NEVER stop before pushing - that leaves work stranded locally
-- NEVER say "ready to push when you are" - YOU must push
-- If push fails, resolve and retry until it succeeds
-<!-- END BEADS INTEGRATION -->
-
-## Secrets
-
-Do not commit private keys, *-key.pem, *.key, .env secrets, or BEGIN … PRIVATE KEY. Generate locally; gitignore keys.
+- Hard prohibitions from ossrules.md patterns (hard-prohibition) — secrets + no invented surface.
+- Verification by change type from ossrules.md (verification-matrix) — maps runtime vs API vs spec.
+- Pointing at the source of truth from ossrules.md (single-source) — OpenSpec / Beads / screenshots.
+- House vocabulary from ossrules.md (house-vocabulary) — Schwerpunkt, IG&C, WorldModel.
